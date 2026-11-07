@@ -415,34 +415,6 @@ body.loading {
     color: var(--text-primary);
 }
 
-.logo-skin-tag {
-    font-size: 0.65rem;
-    font-family: var(--font-mono);
-    font-weight: 700;
-    padding: 0.16rem 0.5rem;
-    border-radius: var(--radius-pill);
-    background: rgba(41, 151, 255, 0.12);
-    border: 1px solid rgba(41, 151, 255, 0.3);
-    color: var(--accent-blue);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: all 0.3s var(--ease-apple);
-}
-
-.logo:hover .logo-skin-tag {
-    background: rgba(48, 209, 88, 0.2);
-    border-color: rgba(48, 209, 88, 0.5);
-    color: var(--accent-emerald);
-    transform: scale(1.05);
-}
-
-body.skin-67 .logo-skin-tag {
-    background: rgba(48, 209, 88, 0.25);
-    border-color: rgba(48, 209, 88, 0.65);
-    color: var(--accent-emerald);
-    box-shadow: 0 0 10px rgba(48, 209, 88, 0.5);
-}
-
 /* Nav Menu */
 .nav-menu {
     display: flex;
@@ -1703,38 +1675,27 @@ body.skin-67 .logo-skin-tag {
 }
 
 /* ==========================================================================
-   Custom "Skin 67" Cursor System
+   Custom "Skin 67" Default Cursor System (Always Active)
    ========================================================================== */
-html.skin-67,
-html.skin-67 body,
-html.skin-67 *,
-body.skin-67,
-body.skin-67 * {
+html,
+body,
+* {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 38 38'%3E%3Cpath d='M3 3 L3 26 L9 20 L15 32 L19 30 L13 18 L20 18 Z' fill='%2305070a' stroke='%232997ff' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 6 L5 23 L9 19 L15 29 L17 28 L11 17 L18 17 Z' fill='%23ffffff'/%3E%3Crect x='15' y='13' width='21' height='14' rx='4' fill='%23000000' stroke='%2330d158' stroke-width='1.5'/%3E%3Ctext x='25.5' y='23.5' font-family='sans-serif' font-size='9.5' font-weight='900' fill='%23ffffff' text-anchor='middle'%3E67%3C/text%3E%3C/svg%3E") 3 3, auto !important;
 }
 
-html.skin-67 a,
-html.skin-67 button,
-html.skin-67 [role='button'],
-html.skin-67 .btn,
-html.skin-67 .copy-ip-btn,
-html.skin-67 .tilt-card,
-html.skin-67 .logo,
-html.skin-67 .spec-item,
-html.skin-67 .hero-pill-badge,
-body.skin-67 a,
-body.skin-67 button,
-body.skin-67 [role='button'],
-body.skin-67 .btn,
-body.skin-67 .copy-ip-btn,
-body.skin-67 .tilt-card,
-body.skin-67 .logo,
-body.skin-67 .spec-item,
-body.skin-67 .hero-pill-badge {
+a,
+button,
+[role='button'],
+.btn,
+.copy-ip-btn,
+.tilt-card,
+.logo,
+.spec-item,
+.hero-pill-badge {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38' viewBox='0 0 38 38'%3E%3Cpath d='M3 3 L3 26 L9 20 L15 32 L19 30 L13 18 L20 18 Z' fill='%23000000' stroke='%2330d158' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 6 L5 23 L9 19 L15 29 L17 28 L11 17 L18 17 Z' fill='%2330d158'/%3E%3Crect x='15' y='13' width='21' height='14' rx='4' fill='%23000000' stroke='%232997ff' stroke-width='1.5'/%3E%3Ctext x='25.5' y='23.5' font-family='sans-serif' font-size='9.5' font-weight='900' fill='%2330d158' text-anchor='middle'%3E67%3C/text%3E%3C/svg%3E") 3 3, pointer !important;
 }
 
-body.skin-67 .cursor-glow {
+.cursor-glow {
     background: radial-gradient(circle, rgba(48, 209, 88, 0.28) 0%, rgba(41, 151, 255, 0.16) 40%, transparent 70%);
 }
 

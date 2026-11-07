@@ -76,25 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalOverlay = document.getElementById('modal-overlay');
     const copyIpBtns = document.querySelectorAll('.copy-ip-btn');
 
-    // Check & apply persistent Skin 67
-    const isSkinActive = localStorage.getItem('cursorSkin67') === 'true';
-    if (isSkinActive) {
-        document.documentElement.classList.add('skin-67');
-        document.body.classList.add('skin-67');
-    }
-
-    // Logo Click Handler: Reload & Change cursor skin to 67
+    // Logo Click Handler: Reload page with satisfying feedback
     if (brandLogo) {
         brandLogo.addEventListener('click', (e) => {
             e.preventDefault();
-            const currentSkin = localStorage.getItem('cursorSkin67') === 'true';
-            const nextSkin = !currentSkin;
-            localStorage.setItem('cursorSkin67', nextSkin ? 'true' : 'false');
-            sessionStorage.setItem('justToggledSkin', nextSkin ? 'enabled' : 'disabled');
-
-            // Satisfying visual feedback
-            triggerSparkBurst(e.clientX, e.clientY, 36);
-            brandLogo.style.transform = 'scale(0.86) rotate(-16deg)';
+            triggerSparkBurst(e.clientX, e.clientY, 38);
+            brandLogo.style.transform = 'scale(0.85) rotate(-18deg)';
+            sessionStorage.setItem('justReloaded', 'true');
 
             setTimeout(() => {
                 window.location.reload();
@@ -102,15 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Check if reloaded from logo skin toggle
-    const justToggled = sessionStorage.getItem('justToggledSkin');
-    if (justToggled) {
-        sessionStorage.removeItem('justToggledSkin');
+    // Check if reloaded from logo click
+    if (sessionStorage.getItem('justReloaded')) {
+        sessionStorage.removeItem('justReloaded');
         setTimeout(() => {
-            showAppleToast(justToggled === 'enabled' 
-                ? '✦ Đã tải lại trang & kích hoạt Skin Chuột 67! ✦' 
-                : '✦ Đã tải lại trang & trở về chuột mặc định ✦'
-            );
+            showAppleToast('✦ Đã làm mới hệ thống 67B67T! ✦');
         }, 2050);
     }
 

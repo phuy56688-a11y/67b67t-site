@@ -1,100 +1,91 @@
 /**
- * 67B67T - Official Website Script
- * Interactive, accessible, lightweight and fast
+ * 67B67T — Apple-Inspired Interactive Controller
+ * Ultra-lightweight, high frame-rate responsiveness
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Elements
-    const header = document.getElementById('header');
+    // DOM Elements
     const mobileToggle = document.getElementById('mobile-toggle');
     const navMenu = document.getElementById('nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
-    const toastContainer = document.getElementById('toast-container');
+    const toastHub = document.getElementById('toast-hub');
     const rulesModal = document.getElementById('rules-modal');
     const btnShowRules = document.getElementById('btn-show-rules');
     const btnCloseModal = document.getElementById('modal-close');
     const btnOkModal = document.getElementById('modal-ok-btn');
     const modalOverlay = document.getElementById('modal-overlay');
-    const contactForm = document.getElementById('contact-form');
     const copyIpBtns = document.querySelectorAll('.copy-ip-btn');
-    const copyLinkBtns = document.querySelectorAll('.copy-link-btn');
 
     /* --------------------------------------------------------------------------
-       1. Toast Notification Utility
+       1. Apple Dynamic Island Style HUD Toast
        -------------------------------------------------------------------------- */
-    function showToast(message, type = 'success') {
+    function showAppleToast(message) {
+        // Clear existing toasts to maintain single Dynamic Island HUD focus
+        toastHub.innerHTML = '';
+
         const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
+        toast.className = 'apple-toast';
         
-        const iconSvg = `
-            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        const checkIcon = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
         `;
 
-        toast.innerHTML = `${iconSvg}<span>${message}</span>`;
-        toastContainer.appendChild(toast);
+        toast.innerHTML = `${checkIcon}<span>${message}</span>`;
+        toastHub.appendChild(toast);
 
-        // Auto remove after 3.2 seconds
+        // Disappear smoothly after 2.8 seconds
         setTimeout(() => {
-            toast.classList.add('hiding');
+            toast.classList.add('leaving');
             toast.addEventListener('transitionend', () => {
                 toast.remove();
             }, { once: true });
-        }, 3200);
+        }, 2800);
     }
 
     /* --------------------------------------------------------------------------
-       2. Clipboard Helper
+       2. Tactile Clipboard Copy
        -------------------------------------------------------------------------- */
-    async function copyToClipboard(text, successMessage) {
+    async function copyToClipboard(text, feedbackMsg) {
         try {
             if (navigator.clipboard && window.isSecureContext) {
                 await navigator.clipboard.writeText(text);
             } else {
-                // Fallback for non-https or older browsers
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = text;
+                tempTextArea.style.position = 'fixed';
+                tempTextArea.style.left = '-9999px';
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
                 document.execCommand('copy');
-                textArea.remove();
+                tempTextArea.remove();
             }
-            showToast(successMessage || `Đã sao chép: ${text}`);
+            showAppleToast(feedbackMsg || `Đã sao chép: ${text}`);
         } catch (err) {
             console.error('Không thể sao chép:', err);
-            showToast(`Vui lòng sao chép thủ công: ${text}`, 'error');
+            showAppleToast(`Sao chép: ${text}`);
         }
     }
 
-    // Attach Copy IP buttons
+    // Attach copy events to all copy buttons
     copyIpBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const ip = btn.getAttribute('data-ip') || '67b67t.site';
+            
+            // Micro-interaction bounce
+            btn.style.transform = 'scale(0.96)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 120);
+
             copyToClipboard(ip, `Đã sao chép IP máy chủ: ${ip}`);
         });
     });
 
-    // Attach Copy Social / Community links
-    copyLinkBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const link = btn.getAttribute('data-link');
-            const msg = btn.getAttribute('data-message') || `Đã sao chép liên kết: ${link}`;
-            if (link) {
-                copyToClipboard(link, msg);
-            }
-        });
-    });
-
     /* --------------------------------------------------------------------------
-       3. Mobile Navigation Drawer
+       3. Mobile Navigation Menu
        -------------------------------------------------------------------------- */
     function toggleMobileMenu() {
         const isOpen = navMenu.classList.toggle('open');
@@ -114,14 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileToggle.addEventListener('click', toggleMobileMenu);
     }
 
-    // Close mobile menu on clicking any navigation link
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             closeMobileMenu();
         });
     });
 
-    // Close when clicking outside
+    // Close on click outside
     document.addEventListener('click', (e) => {
         if (navMenu.classList.contains('open') && 
             !navMenu.contains(e.target) && 
@@ -131,28 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* --------------------------------------------------------------------------
-       4. Header Scrolled State & Active Nav Spy
+       4. Active Navigation Observer
        -------------------------------------------------------------------------- */
-    function handleScroll() {
-        if (window.scrollY > 30) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    // IntersectionObserver for active navigation highlighting
     const sections = document.querySelectorAll('section[id]');
-    const observerOptions = {
-        root: null,
-        rootMargin: '-20% 0px -70% 0px',
-        threshold: 0
-    };
-
-    const sectionObserver = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const id = entry.target.getAttribute('id');
@@ -166,119 +138,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-    }, observerOptions);
+    }, {
+        threshold: 0.3,
+        rootMargin: '-10% 0px -60% 0px'
+    });
 
-    sections.forEach(sec => sectionObserver.observe(sec));
+    sections.forEach(sec => observer.observe(sec));
 
     /* --------------------------------------------------------------------------
-       5. Rules Modal Dialog
+       5. Rules Sheet Modal
        -------------------------------------------------------------------------- */
-    function openModal() {
+    function openRules() {
         rulesModal.classList.add('active');
         rulesModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 
-    function closeModal() {
+    function closeRules() {
         rulesModal.classList.remove('active');
         rulesModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
 
-    if (btnShowRules) {
-        btnShowRules.addEventListener('click', openModal);
-    }
-    if (btnCloseModal) {
-        btnCloseModal.addEventListener('click', closeModal);
-    }
-    if (btnOkModal) {
-        btnOkModal.addEventListener('click', closeModal);
-    }
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', closeModal);
-    }
+    if (btnShowRules) btnShowRules.addEventListener('click', openRules);
+    if (btnCloseModal) btnCloseModal.addEventListener('click', closeRules);
+    if (btnOkModal) btnOkModal.addEventListener('click', closeRules);
+    if (modalOverlay) modalOverlay.addEventListener('click', closeRules);
 
-    // Close modal on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && rulesModal.classList.contains('active')) {
-            closeModal();
+            closeRules();
         }
     });
-
-    /* --------------------------------------------------------------------------
-       6. Interactive Contact Form with Validation
-       -------------------------------------------------------------------------- */
-    if (contactForm) {
-        const nameInput = document.getElementById('contact-name');
-        const emailInput = document.getElementById('contact-email');
-        const messageInput = document.getElementById('contact-message');
-        const submitBtn = document.getElementById('btn-submit-contact');
-
-        function validateEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            let isValid = true;
-
-            // Validate Name
-            if (!nameInput.value.trim()) {
-                nameInput.parentElement.classList.add('has-error');
-                isValid = false;
-            } else {
-                nameInput.parentElement.classList.remove('has-error');
-            }
-
-            // Validate Email
-            if (!validateEmail(emailInput.value.trim())) {
-                emailInput.parentElement.classList.add('has-error');
-                isValid = false;
-            } else {
-                emailInput.parentElement.classList.remove('has-error');
-            }
-
-            // Validate Message
-            if (messageInput.value.trim().length < 10) {
-                messageInput.parentElement.classList.add('has-error');
-                isValid = false;
-            } else {
-                messageInput.parentElement.classList.remove('has-error');
-            }
-
-            if (isValid) {
-                // UI feedback
-                const originalText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = `
-                    <svg class="btn-icon" style="animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-                        <path d="M12 2a10 10 0 0 1 10 10"></path>
-                    </svg>
-                    <span>Đang gửi tin...</span>
-                `;
-
-                setTimeout(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                    contactForm.reset();
-                    showToast('Cảm ơn bạn! Lời nhắn đã được gửi đến ban quản trị 67B67T.');
-                }, 900);
-            }
-        });
-
-        // Realtime clear errors on input
-        [nameInput, emailInput, messageInput].forEach(input => {
-            input.addEventListener('input', () => {
-                if (input.parentElement.classList.contains('has-error')) {
-                    input.parentElement.classList.remove('has-error');
-                }
-            });
-        });
-    }
-
-    console.log('%c67B67T System Loaded%c https://67b67t.site', 
-        'background: #38bdf8; color: #000; font-weight: bold; padding: 4px 8px; border-radius: 4px;',
-        'color: #38bdf8; font-weight: bold; margin-left: 8px;'
-    );
 });

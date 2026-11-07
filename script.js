@@ -4,6 +4,47 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    /* --------------------------------------------------------------------------
+       0. 2-Second Cinematic Opening Animation Sequence
+       -------------------------------------------------------------------------- */
+    const introCurtain = document.getElementById('intro-curtain');
+    const introFill = document.getElementById('intro-progress-fill');
+    const introStatus = document.getElementById('intro-status');
+
+    if (introCurtain && introFill) {
+        const introStart = performance.now();
+        const introDuration = 1400; // Progress finishes in 1.4s
+
+        function stepIntro(now) {
+            const elapsed = now - introStart;
+            const pct = Math.min(100, (elapsed / introDuration) * 100);
+            introFill.style.width = `${pct}%`;
+
+            if (elapsed > 700 && elapsed < 1200 && introStatus) {
+                introStatus.textContent = 'KẾT NỐI MẠNG LƯỚI...';
+            } else if (elapsed >= 1200 && introStatus) {
+                introStatus.textContent = 'HỆ THỐNG SẴN SÀNG!';
+            }
+
+            if (elapsed < introDuration) {
+                requestAnimationFrame(stepIntro);
+            } else {
+                // Curtain dissolves smoothly at ~1.8s, reaching 2s completion
+                setTimeout(() => {
+                    introCurtain.classList.add('intro-hidden');
+                    document.body.classList.remove('loading');
+                    setTimeout(() => {
+                        introCurtain.remove();
+                    }, 700);
+                }, 350);
+            }
+        }
+
+        requestAnimationFrame(stepIntro);
+    } else {
+        document.body.classList.remove('loading');
+    }
+
     // DOM Elements
     const mobileToggle = document.getElementById('mobile-toggle');
     const navMenu = document.getElementById('nav-menu');
@@ -364,5 +405,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         revealElements.forEach(el => revealObserver.observe(el));
+    }
+
+    /* --------------------------------------------------------------------------
+       10. 3D Tilt Hover Controller (Tactile Micro-interactions)
+       -------------------------------------------------------------------------- */
+    const tiltCards = document.querySelectorAll('.tilt-card');
+    if (tiltCards.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        tiltCards.forEach(card => {
+            let isHovered = false;
+
+            card.addEventListener('mouseenter', () => {
+                isHovered = true;
+            });
+
+            card.addEventListener('mousemove', (e) => {
+                if (!isHovered) return;
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                // Subtle smooth 3D tilt
+                const rotateX = ((y - centerY) / centerY) * -6.5;
+                const rotateY = ((x - centerX) / centerX) * 6.5;
+
+                card.style.transform = `perspective(950px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.018, 1.018, 1.018)`;
+            }, { passive: true });
+
+            card.addEventListener('mouseleave', () => {
+                isHovered = false;
+                card.style.transform = 'perspective(950px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        });
+    }
+
+    /* --------------------------------------------------------------------------
+       11. Magnetic Button Hover Interaction
+       -------------------------------------------------------------------------- */
+    const magneticBtns = document.querySelectorAll('.btn');
+    if (magneticBtns.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        magneticBtns.forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                const pullX = x * 0.18;
+                const pullY = y * 0.18;
+                btn.style.transform = `translate3d(${pullX.toFixed(1)}px, ${pullY.toFixed(1)}px, 0)`;
+            }, { passive: true });
+
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translate3d(0, 0, 0)';
+            });
+        });
     }
 });

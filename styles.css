@@ -68,6 +68,127 @@ body {
     min-height: 100vh;
 }
 
+body.loading {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   2-Second Cinematic Intro Curtain
+   ========================================================================== */
+.intro-curtain {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #030407;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.intro-curtain.intro-hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.06);
+    pointer-events: none;
+}
+
+.intro-ambient-glow {
+    position: absolute;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(41, 151, 255, 0.32) 0%, rgba(191, 90, 242, 0.18) 50%, transparent 70%);
+    filter: blur(90px);
+    pointer-events: none;
+    animation: introGlowPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes introGlowPulse {
+    0% { transform: scale(0.85); opacity: 0.5; }
+    100% { transform: scale(1.2); opacity: 0.95; }
+}
+
+.intro-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.5rem;
+    z-index: 2;
+}
+
+.intro-badge {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 22px;
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 45px rgba(41, 151, 255, 0.45), inset 0 0 20px rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    animation: badgeIntroScale 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes badgeIntroScale {
+    0% { transform: scale(0.6) rotate(-12deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.intro-badge-num {
+    font-family: var(--font-apple);
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.intro-brand {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin-bottom: 1.8rem;
+}
+
+.intro-progress-track {
+    width: 220px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.intro-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-emerald));
+    border-radius: var(--radius-pill);
+    box-shadow: 0 0 14px rgba(41, 151, 255, 0.9);
+    transition: width 0.05s linear;
+}
+
+.intro-status {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
 /* Ambient Interactive Canvas & Studio Lights */
 .ambient-canvas {
     position: fixed;
@@ -1361,6 +1482,89 @@ body {
 }
 
 /* ==========================================================================
+   Tactile 3D Tilt & Interactive Mouse Hover Suite
+   ========================================================================== */
+.tilt-card {
+    transform-style: preserve-3d;
+    transform: perspective(950px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1);
+    transition: transform 0.12s ease-out, border-color var(--duration-standard) var(--ease-apple), box-shadow var(--duration-standard) var(--ease-apple);
+    will-change: transform;
+}
+
+.tilt-card:hover {
+    border-color: rgba(41, 151, 255, 0.38);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.75), 0 0 35px rgba(41, 151, 255, 0.18);
+}
+
+/* Hover: Interactive Spec Items */
+.spec-item {
+    padding: 0.6rem 1.1rem;
+    border-radius: var(--radius-md);
+    transition: transform 0.3s var(--ease-apple), background-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+}
+
+.spec-item:hover {
+    transform: translateY(-5px) scale(1.08);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.spec-item:hover .spec-value {
+    color: var(--accent-blue);
+    text-shadow: 0 0 16px rgba(41, 151, 255, 0.7);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* Hover: Step Flow Cards */
+.step-card-apple {
+    cursor: default;
+}
+
+.step-card-apple:hover .step-pill {
+    background: rgba(41, 151, 255, 0.22);
+    border-color: rgba(41, 151, 255, 0.55);
+    color: #ffffff;
+    box-shadow: 0 0 16px rgba(41, 151, 255, 0.45);
+    transform: scale(1.06);
+    transition: all 0.3s var(--ease-apple);
+}
+
+.step-card-apple:hover .mono-code {
+    background: rgba(41, 151, 255, 0.25);
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(41, 151, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+/* Hover: Header Brand Logo */
+.logo {
+    cursor: pointer;
+}
+
+.logo:hover .logo-mark {
+    transform: scale(1.22) rotate(15deg);
+    color: var(--accent-blue);
+    filter: drop-shadow(0 0 12px rgba(41, 151, 255, 0.9));
+}
+
+.logo-mark {
+    transition: transform 0.4s var(--ease-apple), color 0.3s ease, filter 0.3s ease;
+}
+
+/* Hover: Bento Card Tag & Content */
+.bento-card:hover .card-tag {
+    color: var(--accent-emerald);
+    transform: translateX(4px);
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover: Buttons Click Bounce */
+.btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* ==========================================================================
    Accessibility: Reduced Motion Preference
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -1369,6 +1573,15 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
+    }
+    .intro-curtain {
+        display: none !important;
+    }
+    body.loading {
+        overflow: auto !important;
+    }
+    .tilt-card {
+        transform: none !important;
     }
     .reveal {
         opacity: 1 !important;

@@ -276,6 +276,15 @@ body {
     transform: translateY(-2px);
 }
 
+.btn-youtube {
+    background: #FF0000;
+    color: #fff;
+}
+.btn-youtube:hover {
+    background: #cc0000;
+    transform: translateY(-2px);
+}
+
 /* ==========================================================================
    Header & Navbar
    ========================================================================== */
@@ -847,6 +856,11 @@ body {
 .telegram-card .community-icon-box {
     background: rgba(34, 158, 217, 0.15);
     color: #229ED9;
+}
+
+.youtube-card .community-icon-box {
+    background: rgba(255, 0, 0, 0.15);
+    color: #FF0000;
 }
 
 .community-card h3 {

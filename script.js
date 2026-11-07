@@ -60,7 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.remove('loading');
     }
 
+    // Shared spark burst hook
+    let triggerSparkBurst = () => {};
+
     // DOM Elements
+    const brandLogo = document.getElementById('brand-logo') || document.querySelector('.logo');
     const mobileToggle = document.getElementById('mobile-toggle');
     const navMenu = document.getElementById('nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
@@ -71,6 +75,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnOkModal = document.getElementById('modal-ok-btn');
     const modalOverlay = document.getElementById('modal-overlay');
     const copyIpBtns = document.querySelectorAll('.copy-ip-btn');
+
+    // Check & apply persistent Skin 67
+    const isSkinActive = localStorage.getItem('cursorSkin67') === 'true';
+    if (isSkinActive) {
+        document.documentElement.classList.add('skin-67');
+        document.body.classList.add('skin-67');
+    }
+
+    // Logo Click Handler: Reload & Change cursor skin to 67
+    if (brandLogo) {
+        brandLogo.addEventListener('click', (e) => {
+            e.preventDefault();
+            const currentSkin = localStorage.getItem('cursorSkin67') === 'true';
+            const nextSkin = !currentSkin;
+            localStorage.setItem('cursorSkin67', nextSkin ? 'true' : 'false');
+            sessionStorage.setItem('justToggledSkin', nextSkin ? 'enabled' : 'disabled');
+
+            // Satisfying visual feedback
+            triggerSparkBurst(e.clientX, e.clientY, 36);
+            brandLogo.style.transform = 'scale(0.86) rotate(-16deg)';
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 180);
+        });
+    }
+
+    // Check if reloaded from logo skin toggle
+    const justToggled = sessionStorage.getItem('justToggledSkin');
+    if (justToggled) {
+        sessionStorage.removeItem('justToggledSkin');
+        setTimeout(() => {
+            showAppleToast(justToggled === 'enabled' 
+                ? '✦ Đã tải lại trang & kích hoạt Skin Chuột 67! ✦' 
+                : '✦ Đã tải lại trang & trở về chuột mặc định ✦'
+            );
+        }, 2050);
+    }
 
     /* --------------------------------------------------------------------------
        1. Apple Dynamic Island Style HUD Toast
@@ -579,6 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sAnimId = requestAnimationFrame(animateSparks);
             }
         }
+        triggerSparkBurst = createSparkBurst;
 
         function animateSparks() {
             sCtx.clearRect(0, 0, sWidth, sHeight);

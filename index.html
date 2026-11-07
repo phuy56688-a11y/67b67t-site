@@ -17,15 +17,19 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=apple-3.1">
+    <link rel="stylesheet" href="styles.css?v=apple-3.2">
 </head>
 <body>
+    <!-- Ambient Canvas Particles (Interactive Minecraft void dust / starfield) -->
+    <canvas id="ambient-canvas" class="ambient-canvas" aria-hidden="true"></canvas>
+
     <!-- Ambient Studio Lighting (Apple aesthetic) -->
     <div class="ambient-glow ambient-glow-top" aria-hidden="true"></div>
     <div class="ambient-glow ambient-glow-bottom" aria-hidden="true"></div>
 
     <!-- Apple-style Navigation Bar -->
     <header class="header" id="header">
+        <div class="scroll-progress-bar" id="scroll-progress" aria-hidden="true"></div>
         <div class="container header-container">
             <a href="#hero" class="logo" aria-label="67B67T">
                 <span class="logo-mark">
@@ -65,23 +69,23 @@
         <!-- Hero Section: Apple Keynote Style -->
         <section class="hero-section" id="hero">
             <div class="container hero-container">
-                <div class="hero-pill-badge">
+                <div class="hero-pill-badge reveal">
                     <span class="sparkle-icon">✦</span>
                     <span>Minecraft Sinh Tồn &bull; Chỉ Hỗ Trợ Phiên Bản 1.21.11</span>
                 </div>
 
-                <h1 class="hero-title">
+                <h1 class="hero-title reveal">
                     Sức mạnh thuần khiết. <br>
                     <span class="titanium-text">Tự do vô hạn.</span>
                 </h1>
 
-                <p class="hero-lead">
+                <p class="hero-lead reveal">
                     Được kiến trúc để định nghĩa lại trải nghiệm sinh tồn Minecraft. <br class="br-desktop">
                     Mượt mà tuyệt đối với 20 TPS, tối ưu hóa độ trễ và không giới hạn khám phá.
                 </p>
 
                 <!-- Dynamic Island / Apple Glass Capsule Widget -->
-                <div class="dynamic-capsule">
+                <div class="dynamic-capsule reveal spotlight-card">
                     <div class="capsule-left">
                         <span class="live-pulse-container">
                             <span class="live-pulse-ring"></span>
@@ -108,19 +112,19 @@
                 </div>
 
                 <!-- Apple Highlight Spec Badges -->
-                <div class="specs-ribbon">
+                <div class="specs-ribbon reveal spotlight-card">
                     <div class="spec-item">
-                        <span class="spec-value">20.0</span>
+                        <span class="spec-value counter" data-target="20.0" data-decimals="1">20.0</span>
                         <span class="spec-label">TPS Ổn Định Tuyệt Đối</span>
                     </div>
                     <div class="spec-divider" aria-hidden="true"></div>
                     <div class="spec-item">
-                        <span class="spec-value">99.9%</span>
+                        <span class="spec-value counter" data-target="99.9" data-decimals="1" data-suffix="%">99.9%</span>
                         <span class="spec-label">Thời Gian Hoạt Động</span>
                     </div>
                     <div class="spec-divider" aria-hidden="true"></div>
                     <div class="spec-item">
-                        <span class="spec-value">0ms</span>
+                        <span class="spec-value counter" data-target="0" data-decimals="0" data-suffix="ms">0ms</span>
                         <span class="spec-label">Độ Trễ Khối Tối Thiểu</span>
                     </div>
                     <div class="spec-divider" aria-hidden="true"></div>
@@ -135,7 +139,7 @@
         <!-- About Section: The Philosophy -->
         <section class="section about-section" id="about">
             <div class="container">
-                <div class="section-headline text-center">
+                <div class="section-headline text-center reveal">
                     <span class="eyebrow">Triết Lý Thiết Kế</span>
                     <h2 class="headline-title">Sinh ra từ sự đơn giản. <br><span class="titanium-text">Hoàn thiện đến từng khối vuông.</span></h2>
                     <p class="headline-desc">
@@ -145,7 +149,7 @@
 
                 <!-- Apple Bento Grid 1 -->
                 <div class="bento-grid">
-                    <div class="bento-card bento-wide">
+                    <div class="bento-card bento-wide reveal spotlight-card">
                         <div class="bento-content">
                             <span class="card-tag">Hạ Tầng Điện Toán</span>
                             <h3 class="bento-title">Tối ưu hóa đến cấp độ luồng xử lý</h3>
@@ -161,7 +165,7 @@
                         </div>
                     </div>
 
-                    <div class="bento-card">
+                    <div class="bento-card reveal spotlight-card">
                         <div class="bento-content">
                             <span class="card-tag">Công Bằng</span>
                             <h3 class="bento-title">Không Pay-to-Win</h3>
@@ -171,7 +175,7 @@
                         </div>
                     </div>
 
-                    <div class="bento-card">
+                    <div class="bento-card reveal spotlight-card">
                         <div class="bento-content">
                             <span class="card-tag">Bảo Toàn</span>
                             <h3 class="bento-title">Sao Lưu Thời Gian Thực</h3>
@@ -187,13 +191,13 @@
         <!-- Features Bento Showcase -->
         <section class="section features-section" id="features">
             <div class="container">
-                <div class="section-headline text-center">
+                <div class="section-headline text-center reveal">
                     <span class="eyebrow">Trải Nghiệm Toàn Diện</span>
                     <h2 class="headline-title">Từng chi tiết được chăm chút. <br><span class="titanium-text">Cho cảm xúc thăng hoa.</span></h2>
                 </div>
 
                 <div class="features-bento-grid">
-                    <div class="apple-card">
+                    <div class="apple-card reveal spotlight-card">
                         <div class="apple-card-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -204,7 +208,7 @@
                         <p class="card-text">Hệ thống cân bằng tài nguyên thông minh loại bỏ tình trạng nghẽn tick (tick lag), mang lại cảm giác di chuyển và tương tác vật lý tự nhiên.</p>
                     </div>
 
-                    <div class="apple-card">
+                    <div class="apple-card reveal spotlight-card">
                         <div class="apple-card-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -214,7 +218,7 @@
                         <p class="card-text">Hệ sinh thái mạng được che chắn bởi tường lửa nâng cao, lọc sạch các cuộc tấn công mạng nhằm đảm bảo trải nghiệm thông suốt 24/7.</p>
                     </div>
 
-                    <div class="apple-card">
+                    <div class="apple-card reveal spotlight-card">
                         <div class="apple-card-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
@@ -226,7 +230,7 @@
                         <p class="card-text">Máy chủ được tối ưu chuyên biệt, chỉ hỗ trợ chính xác phiên bản Minecraft 1.21.11 để bảo đảm hiệu năng và tính ổn định cao nhất.</p>
                     </div>
 
-                    <div class="apple-card">
+                    <div class="apple-card reveal spotlight-card">
                         <div class="apple-card-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -244,26 +248,26 @@
         <!-- How to Join Section: Minimal Apple Step Flow -->
         <section class="section join-section" id="how-to-join">
             <div class="container">
-                <div class="section-headline text-center">
+                <div class="section-headline text-center reveal">
                     <span class="eyebrow">Chỉ 3 Bước</span>
                     <h2 class="headline-title">Bắt đầu trong tích tắc.</h2>
                     <p class="headline-desc">Không cần cài đặt rườm rà. Bạn chỉ cần kết nối và tận hưởng.</p>
                 </div>
 
                 <div class="steps-flow">
-                    <div class="step-card-apple">
+                    <div class="step-card-apple reveal spotlight-card">
                         <span class="step-pill">Bước 1</span>
                         <h3 class="step-name">Mở Minecraft</h3>
                         <p class="step-detail">Khởi động launcher Minecraft trên thiết bị của bạn và chọn phiên bản <strong>1.21.11</strong>.</p>
                     </div>
 
-                    <div class="step-card-apple">
+                    <div class="step-card-apple reveal spotlight-card">
                         <span class="step-pill">Bước 2</span>
                         <h3 class="step-name">Thêm Địa Chỉ</h3>
                         <p class="step-detail">Vào mục <strong>Multiplayer</strong> &rarr; <strong>Add Server</strong> &rarr; Nhập Server Address: <code class="mono-code">67b67t.site</code></p>
                     </div>
 
-                    <div class="step-card-apple">
+                    <div class="step-card-apple reveal spotlight-card">
                         <span class="step-pill">Bước 3</span>
                         <h3 class="step-name">Bắt Đầu Phiêu Lưu</h3>
                         <p class="step-detail">Bấm <strong>Done</strong> và nhấp đôi vào <strong>67B67T</strong> để bước chân vào thế giới mới!</p>
@@ -271,7 +275,7 @@
                 </div>
 
                 <!-- Apple Callout Banner -->
-                <div class="apple-banner">
+                <div class="apple-banner reveal spotlight-card">
                     <div class="banner-text">
                         <h3>Sẵn sàng ghi dấu huyền thoại của bạn?</h3>
                         <p>Địa chỉ IP luôn mở 24/7 cho tất cả mọi người.</p>
@@ -368,6 +372,6 @@
     <!-- Apple Dynamic Island Style HUD Toast -->
     <div class="toast-hub" id="toast-hub" aria-live="polite"></div>
 
-    <script src="script.js?v=apple-3.1"></script>
+    <script src="script.js?v=apple-3.2"></script>
 </body>
 </html>

@@ -170,4 +170,199 @@ document.addEventListener('DOMContentLoaded', () => {
             closeRules();
         }
     });
+
+    /* --------------------------------------------------------------------------
+       6. Interactive Ambient Canvas (Minecraft Void Dust / Starfield)
+       -------------------------------------------------------------------------- */
+    const canvas = document.getElementById('ambient-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        let width = 0;
+        let height = 0;
+        let particles = [];
+        const particleCount = window.innerWidth < 768 ? 22 : 42;
+        const mouse = { x: -1000, y: -1000, radius: 130 };
+        let animFrameId = null;
+
+        function resizeCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+        }
+
+        class Particle {
+            constructor() {
+                this.reset(true);
+            }
+            reset(randomY = false) {
+                this.x = Math.random() * width;
+                this.y = randomY ? Math.random() * height : height + 10;
+                this.size = Math.random() * 1.8 + 0.8;
+                this.speedY = -(Math.random() * 0.45 + 0.15);
+                this.speedX = (Math.random() - 0.5) * 0.25;
+                this.baseAlpha = Math.random() * 0.35 + 0.18;
+                this.alpha = this.baseAlpha;
+                this.color = Math.random() > 0.4 ? 'rgba(65, 160, 255,' : 'rgba(191, 90, 242,';
+                this.pulseSpeed = Math.random() * 0.02 + 0.008;
+                this.pulseAngle = Math.random() * Math.PI * 2;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.pulseAngle += this.pulseSpeed;
+                this.alpha = this.baseAlpha + Math.sin(this.pulseAngle) * 0.12;
+
+                // Mouse vicinity reaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < mouse.radius) {
+                    const force = (mouse.radius - dist) / mouse.radius;
+                    this.x -= (dx / dist) * force * 1.8;
+                    this.y -= (dy / dist) * force * 1.8;
+                    this.alpha = Math.min(0.9, this.alpha + 0.25);
+                }
+
+                if (this.y < -15 || this.x < -15 || this.x > width + 15) {
+                    this.reset(false);
+                }
+            }
+            draw() {
+                ctx.fillStyle = `${this.color}${Math.max(0.05, this.alpha)})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            animFrameId = requestAnimationFrame(animate);
+        }
+
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            resizeCanvas();
+            initParticles();
+            animate();
+
+            window.addEventListener('resize', resizeCanvas, { passive: true });
+
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            }, { passive: true });
+
+            window.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    cancelAnimationFrame(animFrameId);
+                } else {
+                    animate();
+                }
+            });
+        }
+    }
+
+    /* --------------------------------------------------------------------------
+       7. Scroll Progress Indicator
+       -------------------------------------------------------------------------- */
+    const scrollProgressBar = document.getElementById('scroll-progress');
+    if (scrollProgressBar) {
+        function updateScrollProgress() {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            scrollProgressBar.style.width = `${progress}%`;
+        }
+        window.addEventListener('scroll', updateScrollProgress, { passive: true });
+        updateScrollProgress();
+    }
+
+    /* --------------------------------------------------------------------------
+       8. Cursor Spotlight Tracker for Cards
+       -------------------------------------------------------------------------- */
+    const spotlightCards = document.querySelectorAll('.spotlight-card');
+    if (spotlightCards.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        spotlightCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }, { passive: true });
+        });
+    }
+
+    /* --------------------------------------------------------------------------
+       9. Scroll Reveal Observer & Number Counter
+       -------------------------------------------------------------------------- */
+    function animateCounter(el) {
+        if (el.dataset.animated === 'true') return;
+        el.dataset.animated = 'true';
+
+        const target = parseFloat(el.getAttribute('data-target'));
+        const decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
+        const suffix = el.getAttribute('data-suffix') || '';
+        const duration = 1600;
+        const startTime = performance.now();
+
+        function update(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease-out expo curve
+            const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            const current = target * easeProgress;
+
+            el.textContent = current.toFixed(decimals) + suffix;
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                el.textContent = target.toFixed(decimals) + suffix;
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    const revealElements = document.querySelectorAll('.reveal');
+    if (revealElements.length > 0) {
+        const revealObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+
+                    // If contains counters, trigger count-up
+                    const counters = entry.target.querySelectorAll('.counter');
+                    counters.forEach(counter => animateCounter(counter));
+
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: '0px 0px -30px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+    }
 });

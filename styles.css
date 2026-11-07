@@ -103,10 +103,32 @@ body.loading {
     width: 520px;
     height: 520px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(41, 151, 255, 0.32) 0%, rgba(191, 90, 242, 0.18) 50%, transparent 70%);
+    background: radial-gradient(circle, rgba(41, 151, 255, 0.35) 0%, rgba(191, 90, 242, 0.2) 50%, transparent 70%);
     filter: blur(90px);
     pointer-events: none;
     animation: introGlowPulse 2s ease-in-out infinite alternate;
+}
+
+.intro-shockwave {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgba(41, 151, 255, 0.85);
+    box-shadow: 0 0 45px rgba(41, 151, 255, 0.9), inset 0 0 25px rgba(48, 209, 88, 0.6);
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.6);
+    z-index: 1;
+}
+
+.intro-shockwave.trigger {
+    animation: shockwaveExpand 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shockwaveExpand {
+    0% { opacity: 1; transform: scale(0.8); }
+    100% { opacity: 0; transform: scale(6.2); }
 }
 
 @keyframes introGlowPulse {
@@ -126,12 +148,12 @@ body.loading {
 
 .intro-badge {
     position: relative;
-    width: 80px;
-    height: 80px;
-    border-radius: 22px;
+    width: 84px;
+    height: 84px;
+    border-radius: 24px;
     background: #000000;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 45px rgba(41, 151, 255, 0.45), inset 0 0 20px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0 50px rgba(41, 151, 255, 0.5), inset 0 0 24px rgba(255, 255, 255, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -146,12 +168,13 @@ body.loading {
 
 .intro-badge-num {
     font-family: var(--font-apple);
-    font-size: 2.2rem;
+    font-size: 2.3rem;
     font-weight: 800;
     letter-spacing: -0.05em;
-    background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
+    background: linear-gradient(135deg, #ffffff 30%, #70b4ff 70%, #bf5af2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(41, 151, 255, 0.4));
 }
 
 .intro-brand {
@@ -162,14 +185,20 @@ body.loading {
     margin-bottom: 1.8rem;
 }
 
+.intro-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .intro-progress-track {
     width: 220px;
-    height: 3px;
+    height: 4px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-pill);
     overflow: hidden;
     position: relative;
-    margin-bottom: 1rem;
 }
 
 .intro-progress-fill {
@@ -178,7 +207,16 @@ body.loading {
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-emerald));
     border-radius: var(--radius-pill);
     box-shadow: 0 0 14px rgba(41, 151, 255, 0.9);
-    transition: width 0.05s linear;
+    transition: width 0.04s linear;
+}
+
+.intro-pct {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    min-width: 42px;
+    text-align: right;
 }
 
 .intro-status {
@@ -187,6 +225,13 @@ body.loading {
     color: var(--text-tertiary);
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.intro-status.ready {
+    color: var(--accent-emerald) !important;
+    text-shadow: 0 0 14px rgba(48, 209, 88, 0.8);
+    transform: scale(1.05);
 }
 
 /* Ambient Interactive Canvas & Studio Lights */
@@ -257,19 +302,20 @@ body.loading {
     text-align: center;
 }
 
-/* Titanium Gradient Text with Shimmer Sheen */
+/* Titanium Gradient Text with Prismatic Shimmer Sheen */
 .titanium-text {
-    background: linear-gradient(110deg, #ffffff 0%, #a1a1aa 25%, #ffffff 50%, #71717a 75%, #ffffff 100%);
-    background-size: 200% auto;
+    background: linear-gradient(110deg, #ffffff 0%, #a1a1aa 18%, #60a5fa 35%, #ffffff 52%, #c084fc 70%, #a1a1aa 88%, #ffffff 100%);
+    background-size: 240% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;
-    animation: titaniumShimmer 7s ease-in-out infinite alternate;
+    animation: titaniumShimmer 6s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 25px rgba(96, 165, 250, 0.25));
 }
 
 @keyframes titaniumShimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
+    0% { background-position: 0% 50%; filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.15)); }
+    100% { background-position: 100% 50%; filter: drop-shadow(0 0 35px rgba(192, 132, 252, 0.35)); }
 }
 
 /* Section Headlines (Apple Keynote Style) */
@@ -1565,6 +1611,70 @@ body.loading {
 }
 
 /* ==========================================================================
+   Liquid Interactive Cursor Aura & Specular Glare System
+   ========================================================================== */
+.cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(circle, rgba(41, 151, 255, 0.16) 0%, rgba(191, 90, 242, 0.08) 40%, transparent 70%);
+    transform: translate(-50%, -50%);
+    filter: blur(24px);
+    transition: width 0.35s var(--ease-apple), height 0.35s var(--ease-apple), opacity 0.4s ease, background 0.35s ease;
+    opacity: 0;
+    will-change: transform, width, height, opacity;
+}
+
+.cursor-glow.active {
+    opacity: 1;
+}
+
+.cursor-glow.hovering {
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba(41, 151, 255, 0.25) 0%, rgba(48, 209, 88, 0.15) 45%, transparent 70%);
+    filter: blur(32px);
+}
+
+/* Satisfying Click Sparks / Particle Layer */
+.sparks-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 999999;
+}
+
+/* Dynamic Glare Specular Sheen for 3D Tilt Cards */
+.card-glare {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+        circle 500px at var(--glare-x, 50%) var(--glare-y, 50%),
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.03) 35%,
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+    z-index: 4;
+    mix-blend-mode: overlay;
+}
+
+.tilt-card:hover .card-glare {
+    opacity: 1;
+}
+
+/* ==========================================================================
    Accessibility: Reduced Motion Preference
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -1574,7 +1684,10 @@ body.loading {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-    .intro-curtain {
+    .intro-curtain,
+    .cursor-glow,
+    .sparks-canvas,
+    .card-glare {
         display: none !important;
     }
     body.loading {

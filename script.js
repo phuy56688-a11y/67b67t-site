@@ -9,34 +9,49 @@ document.addEventListener('DOMContentLoaded', () => {
        -------------------------------------------------------------------------- */
     const introCurtain = document.getElementById('intro-curtain');
     const introFill = document.getElementById('intro-progress-fill');
+    const introPct = document.getElementById('intro-pct');
     const introStatus = document.getElementById('intro-status');
+    const introShockwave = document.getElementById('intro-shockwave');
 
     if (introCurtain && introFill) {
         const introStart = performance.now();
-        const introDuration = 1400; // Progress finishes in 1.4s
+        const introDuration = 1350; // Progress finishes in 1.35s
 
         function stepIntro(now) {
             const elapsed = now - introStart;
             const pct = Math.min(100, (elapsed / introDuration) * 100);
             introFill.style.width = `${pct}%`;
+            if (introPct) introPct.textContent = `${Math.floor(pct)}%`;
 
-            if (elapsed > 700 && elapsed < 1200 && introStatus) {
+            if (elapsed < 600 && introStatus) {
+                introStatus.textContent = 'ĐANG KHỞI CHẠY THẾ GIỚI...';
+            } else if (elapsed >= 600 && elapsed < 1000 && introStatus) {
+                introStatus.textContent = 'ĐỒNG BỘ PROTOCOL 1.21.11...';
+            } else if (elapsed >= 1000 && elapsed < 1350 && introStatus) {
                 introStatus.textContent = 'KẾT NỐI MẠNG LƯỚI...';
-            } else if (elapsed >= 1200 && introStatus) {
-                introStatus.textContent = 'HỆ THỐNG SẴN SÀNG!';
             }
 
             if (elapsed < introDuration) {
                 requestAnimationFrame(stepIntro);
             } else {
-                // Curtain dissolves smoothly at ~1.8s, reaching 2s completion
+                // Hit 100% - Fire shockwave & ready status
+                if (introPct) introPct.textContent = '100%';
+                if (introStatus) {
+                    introStatus.textContent = '✦ HỆ THỐNG SẴN SÀNG! ✦';
+                    introStatus.classList.add('ready');
+                }
+                if (introShockwave) {
+                    introShockwave.classList.add('trigger');
+                }
+
+                // Dissolve curtain at ~1.85s, completing 2.0s experience
                 setTimeout(() => {
                     introCurtain.classList.add('intro-hidden');
                     document.body.classList.remove('loading');
                     setTimeout(() => {
                         introCurtain.remove();
-                    }, 700);
-                }, 350);
+                    }, 650);
+                }, 480);
             }
         }
 
@@ -408,35 +423,92 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* --------------------------------------------------------------------------
-       10. 3D Tilt Hover Controller (Tactile Micro-interactions)
+       10. Velvety 3D Tilt & Specular Glare (Spring Lerp Physics)
        -------------------------------------------------------------------------- */
+    function lerp(start, end, factor) {
+        return start + (end - start) * factor;
+    }
+
     const tiltCards = document.querySelectorAll('.tilt-card');
     if (tiltCards.length > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         tiltCards.forEach(card => {
-            let isHovered = false;
+            // Inject specular glare overlay if missing
+            let glare = card.querySelector('.card-glare');
+            if (!glare) {
+                glare = document.createElement('div');
+                glare.className = 'card-glare';
+                card.appendChild(glare);
+            }
+
+            const state = {
+                currentRotX: 0,
+                currentRotY: 0,
+                targetRotX: 0,
+                targetRotY: 0,
+                currentScale: 1,
+                targetScale: 1,
+                glareX: 50,
+                glareY: 50,
+                targetGlareX: 50,
+                targetGlareY: 50,
+                isHovered: false,
+                animId: null
+            };
+
+            function updateTilt() {
+                state.currentRotX = lerp(state.currentRotX, state.targetRotX, 0.12);
+                state.currentRotY = lerp(state.currentRotY, state.targetRotY, 0.12);
+                state.currentScale = lerp(state.currentScale, state.targetScale, 0.12);
+                state.glareX = lerp(state.glareX, state.targetGlareX, 0.15);
+                state.glareY = lerp(state.glareY, state.targetGlareY, 0.15);
+
+                card.style.transform = `perspective(1000px) rotateX(${state.currentRotX.toFixed(2)}deg) rotateY(${state.currentRotY.toFixed(2)}deg) scale3d(${state.currentScale.toFixed(3)}, ${state.currentScale.toFixed(3)}, ${state.currentScale.toFixed(3)})`;
+                card.style.setProperty('--glare-x', `${state.glareX.toFixed(1)}%`);
+                card.style.setProperty('--glare-y', `${state.glareY.toFixed(1)}%`);
+
+                const delta = Math.abs(state.currentRotX - state.targetRotX) + Math.abs(state.currentRotY - state.targetRotY) + Math.abs(state.currentScale - state.targetScale);
+                if (state.isHovered || delta > 0.01) {
+                    state.animId = requestAnimationFrame(updateTilt);
+                } else {
+                    state.animId = null;
+                }
+            }
 
             card.addEventListener('mouseenter', () => {
-                isHovered = true;
+                state.isHovered = true;
+                state.targetScale = 1.02;
+                if (!state.animId) {
+                    state.animId = requestAnimationFrame(updateTilt);
+                }
             });
 
             card.addEventListener('mousemove', (e) => {
-                if (!isHovered) return;
                 const rect = card.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 const centerX = rect.width / 2;
                 const centerY = rect.height / 2;
 
-                // Subtle smooth 3D tilt
-                const rotateX = ((y - centerY) / centerY) * -6.5;
-                const rotateY = ((x - centerX) / centerX) * 6.5;
+                state.targetRotX = ((y - centerY) / centerY) * -7;
+                state.targetRotY = ((x - centerX) / centerX) * 7;
+                state.targetGlareX = (x / rect.width) * 100;
+                state.targetGlareY = (y / rect.height) * 100;
 
-                card.style.transform = `perspective(950px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.018, 1.018, 1.018)`;
+                if (!state.animId) {
+                    state.animId = requestAnimationFrame(updateTilt);
+                }
             }, { passive: true });
 
             card.addEventListener('mouseleave', () => {
-                isHovered = false;
-                card.style.transform = 'perspective(950px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                state.isHovered = false;
+                state.targetRotX = 0;
+                state.targetRotY = 0;
+                state.targetScale = 1;
+                state.targetGlareX = 50;
+                state.targetGlareY = 50;
+                if (!state.animId) {
+                    state.animId = requestAnimationFrame(updateTilt);
+                }
             });
         });
     }
@@ -451,14 +523,148 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rect = btn.getBoundingClientRect();
                 const x = e.clientX - rect.left - rect.width / 2;
                 const y = e.clientY - rect.top - rect.height / 2;
-                const pullX = x * 0.18;
-                const pullY = y * 0.18;
+                const pullX = x * 0.22;
+                const pullY = y * 0.22;
                 btn.style.transform = `translate3d(${pullX.toFixed(1)}px, ${pullY.toFixed(1)}px, 0)`;
             }, { passive: true });
 
             btn.addEventListener('mouseleave', () => {
                 btn.style.transform = 'translate3d(0, 0, 0)';
             });
+        });
+    }
+
+    /* --------------------------------------------------------------------------
+       12. Satisfying Click Sparks / Particle Burst System
+       -------------------------------------------------------------------------- */
+    const sparksCanvas = document.getElementById('sparks-canvas');
+    if (sparksCanvas && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const sCtx = sparksCanvas.getContext('2d');
+        let sparks = [];
+        let sWidth = 0;
+        let sHeight = 0;
+        let sAnimId = null;
+
+        function resizeSparksCanvas() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            sWidth = window.innerWidth;
+            sHeight = window.innerHeight;
+            sparksCanvas.width = sWidth * dpr;
+            sparksCanvas.height = sHeight * dpr;
+            sCtx.scale(dpr, dpr);
+        }
+        resizeSparksCanvas();
+        window.addEventListener('resize', resizeSparksCanvas, { passive: true });
+
+        function createSparkBurst(x, y, count = 26) {
+            const colors = ['#2997ff', '#30d158', '#bf5af2', '#ffffff', '#ffd60a', '#60a5fa'];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 2.5;
+                sparks.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - Math.random() * 2,
+                    size: Math.random() * 3.5 + 1.5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    friction: 0.93,
+                    gravity: 0.22,
+                    life: Math.random() * 15 + 35,
+                    maxLife: 50
+                });
+            }
+            if (!sAnimId) {
+                sAnimId = requestAnimationFrame(animateSparks);
+            }
+        }
+
+        function animateSparks() {
+            sCtx.clearRect(0, 0, sWidth, sHeight);
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const s = sparks[i];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.vx *= s.friction;
+                s.vy = s.vy * s.friction + s.gravity;
+                s.size *= 0.97;
+                s.life--;
+                s.alpha = Math.max(0, s.life / s.maxLife);
+
+                sCtx.save();
+                sCtx.shadowBlur = 8;
+                sCtx.shadowColor = s.color;
+                sCtx.fillStyle = s.color;
+                sCtx.globalAlpha = s.alpha;
+                sCtx.beginPath();
+                sCtx.arc(s.x, s.y, Math.max(0.6, s.size), 0, Math.PI * 2);
+                sCtx.fill();
+                sCtx.restore();
+
+                if (s.life <= 0 || s.size <= 0.4) {
+                    sparks.splice(i, 1);
+                }
+            }
+
+            if (sparks.length > 0) {
+                sAnimId = requestAnimationFrame(animateSparks);
+            } else {
+                sCtx.clearRect(0, 0, sWidth, sHeight);
+                sAnimId = null;
+            }
+        }
+
+        // Trigger on any click across the page
+        window.addEventListener('pointerdown', (e) => {
+            const isCopyBtn = e.target.closest('.copy-ip-btn');
+            const sparkCount = isCopyBtn ? 42 : 18;
+            createSparkBurst(e.clientX, e.clientY, sparkCount);
+        });
+    }
+
+    /* --------------------------------------------------------------------------
+       13. Liquid Interactive Cursor Aura (Smooth spring follower)
+       -------------------------------------------------------------------------- */
+    const cursorGlow = document.getElementById('cursor-glow');
+    if (cursorGlow && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(pointer: fine)').matches) {
+        let mouseX = -500;
+        let mouseY = -500;
+        let glowX = -500;
+        let glowY = -500;
+        let isMoving = false;
+
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            if (!isMoving) {
+                isMoving = true;
+                cursorGlow.classList.add('active');
+                requestAnimationFrame(updateCursor);
+            }
+        }, { passive: true });
+
+        window.addEventListener('mouseleave', () => {
+            cursorGlow.classList.remove('active');
+        });
+
+        function updateCursor() {
+            glowX = lerp(glowX, mouseX, 0.16);
+            glowY = lerp(glowY, mouseY, 0.16);
+
+            cursorGlow.style.left = `${glowX.toFixed(1)}px`;
+            cursorGlow.style.top = `${glowY.toFixed(1)}px`;
+
+            if (isMoving) {
+                requestAnimationFrame(updateCursor);
+            }
+        }
+
+        // Expand aura on interactive elements
+        const interactiveTargets = document.querySelectorAll('a, button, .tilt-card, .spec-item, .logo');
+        interactiveTargets.forEach(el => {
+            el.addEventListener('mouseenter', () => cursorGlow.classList.add('hovering'));
+            el.addEventListener('mouseleave', () => cursorGlow.classList.remove('hovering'));
         });
     }
 });

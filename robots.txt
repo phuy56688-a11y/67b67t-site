@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://67b67t.site/sitemap.xml

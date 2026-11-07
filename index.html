@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="67B67T - Máy chủ Minecraft sinh tồn đỉnh cao, thế giới tự do, hiệu năng ổn định và cộng đồng game thủ sôi động tại Việt Nam.">
+    <meta name="keywords" content="67b67t, 67b67t.site, minecraft vietnam, minecraft sinh ton, minecraft anarchy, minecraft server">
+    <meta name="author" content="67B67T Team">
+    <meta name="theme-color" content="#0a0d14">
+    <meta property="og:title" content="67B67T - Thế Giới Minecraft Sinh Tồn Tự Do">
+    <meta property="og:description" content="Khám phá máy chủ Minecraft 67B67T với lối chơi hấp dẫn, đường truyền mượt mà, cộng đồng thân thiện. Địa chỉ IP: 67b67t.site">
+    <meta property="og:url" content="https://67b67t.site">
+    <meta property="og:type" content="website">
+    <title>67B67T | Máy Chủ Minecraft & Cộng Đồng Sinh Tồn Đỉnh Cao</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230b0f19'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='42' font-weight='900' fill='%2338bdf8'>67</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background visual elements -->
+    <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+    <div class="bg-grid-overlay" aria-hidden="true"></div>
+
+    <!-- Header Navigation -->
+    <header class="header" id="header">
+        <div class="container header-container">
+            <a href="#hero" class="logo" aria-label="67B67T Trang chủ">
+                <span class="logo-icon">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 2L28 8.5V23.5L16 30L4 23.5V8.5L16 2Z" fill="url(#logo-grad)" stroke="#38bdf8" stroke-width="1.5"/>
+                        <path d="M16 2V30M4 8.5L28 23.5M28 8.5L4 23.5" stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#0284c7" stop-opacity="0.6"/>
+                                <stop offset="1" stop-color="#7c3aed" stop-opacity="0.6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </span>
+                <span class="logo-text">67B67T</span>
+            </a>
+
+            <nav class="nav-menu" id="nav-menu" aria-label="Điều hướng chính">
+                <ul class="nav-list">
+                    <li><a href="#hero" class="nav-link active">Trang Chủ</a></li>
+                    <li><a href="#about" class="nav-link">Giới Thiệu</a></li>
+                    <li><a href="#features" class="nav-link">Tính Năng</a></li>
+                    <li><a href="#how-to-join" class="nav-link">Tham Gia</a></li>
+                    <li><a href="#community" class="nav-link">Cộng Đồng</a></li>
+                    <li><a href="#contact" class="nav-link">Liên Hệ</a></li>
+                </ul>
+            </nav>
+
+            <div class="header-actions">
+                <button type="button" class="btn btn-outline btn-sm copy-ip-btn" data-ip="67b67t.site" aria-label="Sao chép địa chỉ IP máy chủ">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span>IP: 67b67t.site</span>
+                </button>
+                <button type="button" class="mobile-toggle" id="mobile-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Mở thực đơn">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero-section" id="hero">
+            <div class="container hero-container">
+                <div class="hero-badge">
+                    <span class="pulse-dot"></span>
+                    <span>Máy Chủ Minecraft Việt Nam &bull; Sẵn Sàng Trải Nghiệm</span>
+                </div>
+
+                <h1 class="hero-title">
+                    Thế Giới Tự Do <br>
+                    <span class="gradient-text">Không Giới Hạn Cùng 67B67T</span>
+                </h1>
+
+                <p class="hero-desc">
+                    Chào mừng bạn đến với <strong>67B67T</strong> – nơi đam mê sinh tồn, phiêu lưu và xây dựng hội tụ. Trải nghiệm thế giới Minecraft chân thực, hạ tầng tối ưu ổn định 24/7 và một cộng đồng đồng hành vững mạnh.
+                </p>
+
+                <!-- Interactive Server Address Card -->
+                <div class="server-box">
+                    <div class="server-info">
+                        <div class="server-meta">
+                            <span class="status-indicator online">
+                                <span class="indicator-glow"></span>
+                                Online 24/7
+                            </span>
+                            <span class="server-version">Hỗ trợ phiên bản 1.20+</span>
+                        </div>
+                        <div class="server-ip-display">
+                            <span class="ip-label">Server IP:</span>
+                            <span class="ip-address" id="main-ip-text">67b67t.site</span>
+                        </div>
+                    </div>
+                    <div class="server-actions">
+                        <button type="button" class="btn btn-primary btn-copy-hero copy-ip-btn" data-ip="67b67t.site">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>Sao chép IP</span>
+                        </button>
+                        <a href="#how-to-join" class="btn btn-secondary">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                            </svg>
+                            <span>Hướng dẫn vào game</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Highlight Metrics -->
+                <div class="hero-metrics">
+                    <div class="metric-card">
+                        <span class="metric-number">24/7</span>
+                        <span class="metric-label">Hạ tầng hoạt động liên tục</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-number">20 TPS</span>
+                        <span class="metric-label">Tối ưu hiệu năng, mượt mà</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-number">100%</span>
+                        <span class="metric-label">Miễn phí trải nghiệm</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-number">DDoS Pro</span>
+                        <span class="metric-label">Bảo vệ kết nối an toàn</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section class="section about-section" id="about">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Về Chúng Tôi</span>
+                    <h2 class="section-title">Hành Trình Khởi Nguồn Của <span class="gradient-text">67B67T</span></h2>
+                    <p class="section-subtitle">
+                        Được xây dựng từ niềm đam mê game Minecraft nguyên bản kết hợp hệ thống máy chủ hiện đại, 67B67T mang đến sân chơi công bằng cho mọi game thủ.
+                    </p>
+                </div>
+
+                <div class="about-grid">
+                    <div class="about-card glass-panel">
+                        <div class="about-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                        </div>
+                        <h3>Sứ Mệnh Công Bằng</h3>
+                        <p>Không phân biệt, tôn trọng kỹ năng và công sức của người chơi. Tận hưởng lối chơi sinh tồn thực thụ không bị chi phối bởi yếu tố thương mại hoá mất cân bằng.</p>
+                    </div>
+
+                    <div class="about-card glass-panel">
+                        <div class="about-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                        </div>
+                        <h3>Hạ Tầng Tốc Độ Cao</h3>
+                        <p>Hệ thống máy chủ đặt tại datacenter trong nước với băng thông cao, giảm độ trễ (ping thấp) giúp các pha giao tranh hay xây dựng công trình lớn luôn mượt mà.</p>
+                    </div>
+
+                    <div class="about-card glass-panel">
+                        <div class="about-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                        <h3>Cộng Đồng Gắn Kết</h3>
+                        <p>Nơi giao lưu, thành lập liên minh, trao đổi kinh nghiệm và cùng nhau xây dựng các kỳ quan kiến trúc trong thế giới khối vuông kỳ ảo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="section features-section" id="features">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Đặc Điểm Nổi Bật</span>
+                    <h2 class="section-title">Trải Nghiệm Đẳng Cấp Tại <span class="gradient-text">67B67T</span></h2>
+                    <p class="section-subtitle">Mọi chi tiết đều được tinh chỉnh nhằm mang lại cảm giác chân thật và trọn vẹn nhất cho bạn.</p>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="m4.93 4.93 4.24 4.24"></path>
+                                <path d="m14.83 9.17 4.24-4.24"></path>
+                                <path d="m14.83 14.83 4.24 4.24"></path>
+                                <path d="m9.17 14.83-4.24 4.24"></path>
+                                <circle cx="12" cy="12" r="4"></circle>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Sinh Tồn Mở Rộng</h3>
+                        <p class="feature-text">Bản đồ thế giới rộng lớn với tài nguyên phong phú, cấu trúc địa hình đa dạng kích thích sự tò mò khám phá của bạn.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Chống Gian Lận Tiên Tiến</h3>
+                        <p class="feature-text">Hệ thống bảo vệ và kiểm duyệt hiện đại giúp bảo đảm môi trường trong sạch, ngăn chặn các hành vi gian lận và hack phá hoại.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Hiệu Năng TPS Ổn Định</h3>
+                        <p class="feature-text">Bộ máy chủ được cấu hình tối ưu luồng xử lý, duy trì 20 TPS ổn định ngay cả khi số lượng người chơi online đông đảo.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Hệ Thống Lưu Trữ An Toàn</h3>
+                        <p class="feature-text">Cơ chế tự động sao lưu dữ liệu thế giới định kỳ, đảm bảo toàn bộ công trình và thành quả của bạn luôn an toàn.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="7"></circle>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Sự Kiện & Phần Thưởng</h3>
+                        <p class="feature-text">Các giải đấu PvP, thử thách sinh tồn và sự kiện xây dựng được tổ chức thường xuyên với nhiều phần thưởng hấp dẫn.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">Đội Ngũ Hỗ Trợ Nhiệt Tình</h3>
+                        <p class="feature-text">Ban quản trị luôn lắng nghe ý kiến cộng đồng, sẵn sàng giải đáp thắc mắc và xử lý sự cố nhanh chóng qua các kênh liên lạc.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How to Join Section -->
+        <section class="section join-section" id="how-to-join">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Hướng Dẫn Nhanh</span>
+                    <h2 class="section-title">Làm Thế Nào Để Tham Gia Máy Chủ?</h2>
+                    <p class="section-subtitle">Chỉ với 3 bước đơn giản, bạn đã có thể bắt đầu hành trình tại 67B67T.</p>
+                </div>
+
+                <div class="steps-wrapper">
+                    <div class="step-card">
+                        <div class="step-num">01</div>
+                        <h3 class="step-title">Khởi Động Minecraft</h3>
+                        <p class="step-desc">Mở launcher Minecraft trên máy tính của bạn và chọn phiên bản <strong>1.20 trở lên</strong> (khuyến nghị phiên bản mới nhất).</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">02</div>
+                        <h3 class="step-title">Thêm Máy Chủ</h3>
+                        <p class="step-desc">Vào mục <strong>Chơi Mạng (Multiplayer)</strong> &rarr; Nhấn <strong>Thêm Máy Chủ (Add Server)</strong> &rarr; Đặt tên là <strong>67B67T</strong>.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <div class="step-num">03</div>
+                        <h3 class="step-title">Nhập Địa Chỉ IP</h3>
+                        <p class="step-desc">Điền địa chỉ máy chủ: <code class="ip-inline">67b67t.site</code> rồi nhấn <strong>Xong (Done)</strong> và bấm kết nối để bắt đầu chơi!</p>
+                    </div>
+                </div>
+
+                <!-- Callout Box -->
+                <div class="join-callout glass-panel">
+                    <div class="callout-content">
+                        <h3>Bạn cần hỗ trợ kết nối hoặc kiểm tra thông tin?</h3>
+                        <p>Nếu bạn gặp sự cố kết nối, hãy thử dùng cổng dự phòng hoặc tham gia cộng đồng Discord để được trợ giúp ngay lập tức.</p>
+                    </div>
+                    <div class="callout-actions">
+                        <button type="button" class="btn btn-primary copy-ip-btn" data-ip="67b67t.site">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            <span>Copy IP: 67b67t.site</span>
+                        </button>
+                        <button type="button" class="btn btn-outline" id="btn-show-rules">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>Quy tắc máy chủ</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Community Section -->
+        <section class="section community-section" id="community">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Kết Nối Bạn Bè</span>
+                    <h2 class="section-title">Gia Nhập Cộng Đồng <span class="gradient-text">67B67T</span></h2>
+                    <p class="section-subtitle">Gặp gỡ những người bạn cùng sở thích, trao đổi kiến thức và cập nhật thông báo bảo trì máy chủ sớm nhất.</p>
+                </div>
+
+                <div class="community-grid">
+                    <div class="community-card discord-card">
+                        <div class="community-icon-box">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                            </svg>
+                        </div>
+                        <h3>Discord Server</h3>
+                        <p>Kênh giao lưu chính thức, cập nhật sự kiện, thông báo bảo trì và voice chat cùng đồng đội.</p>
+                        <button type="button" class="btn btn-discord btn-sm copy-link-btn" data-link="https://discord.gg/67b67t" data-message="Đã sao chép liên kết Discord!">
+                            <span>Tham gia Discord</span>
+                        </button>
+                    </div>
+
+                    <div class="community-card facebook-card">
+                        <div class="community-icon-box">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </div>
+                        <h3>Nhóm Facebook</h3>
+                        <p>Cộng đồng chia sẻ hình ảnh xây dựng, meme vui nhộn và các câu chuyện phiêu lưu đáng nhớ.</p>
+                        <button type="button" class="btn btn-facebook btn-sm copy-link-btn" data-link="https://facebook.com/groups/67b67t" data-message="Đã sao chép liên kết Facebook!">
+                            <span>Ghé thăm Group</span>
+                        </button>
+                    </div>
+
+                    <div class="community-card telegram-card">
+                        <div class="community-icon-box">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                            </svg>
+                        </div>
+                        <h3>Kênh Telegram</h3>
+                        <p>Nhận thông báo cập nhật nhanh, cảnh báo bảo trì máy chủ và lịch trình sự kiện mới nhất.</p>
+                        <button type="button" class="btn btn-telegram btn-sm copy-link-btn" data-link="https://t.me/server67b67t" data-message="Đã sao chép liên kết Telegram!">
+                            <span>Theo dõi Channel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section class="section contact-section" id="contact">
+            <div class="container">
+                <div class="section-header text-center">
+                    <span class="section-tag">Liên Hệ Ban Quản Trị</span>
+                    <h2 class="section-title">Gửi Lời Nhắn Đến <span class="gradient-text">67B67T</span></h2>
+                    <p class="section-subtitle">Bạn có câu hỏi, đề xuất tính năng hay cần hỗ trợ kỹ thuật? Đừng ngần ngại để lại lời nhắn.</p>
+                </div>
+
+                <div class="contact-wrapper">
+                    <!-- Contact Info Panel -->
+                    <div class="contact-info glass-panel">
+                        <h3>Thông Tin Trợ Giúp</h3>
+                        <p>Chúng tôi luôn nỗ lực phản hồi trong vòng 24 giờ làm việc.</p>
+
+                        <div class="info-list">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                        <polyline points="22,6 12,13 2,6"></polyline>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span class="info-label">Email hỗ trợ:</span>
+                                    <a href="mailto:admin@67b67t.site" class="info-value">admin@67b67t.site</a>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span class="info-label">Trang web chính thức:</span>
+                                    <span class="info-value">https://67b67t.site</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span class="info-label">Thời gian hỗ trợ:</span>
+                                    <span class="info-value">Trực tuyến 24/7 qua Discord</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="contact-badges">
+                            <span class="badge-tag">#MinecraftVN</span>
+                            <span class="badge-tag">#67B67T</span>
+                            <span class="badge-tag">#SinhTon</span>
+                            <span class="badge-tag">#CongDong</span>
+                        </div>
+                    </div>
+
+                    <!-- Functional Contact Form -->
+                    <div class="contact-form-card glass-panel">
+                        <form id="contact-form" class="contact-form" novalidate>
+                            <div class="form-group">
+                                <label for="contact-name" class="form-label">Tên của bạn hoặc Tên trong game (IGN) <span class="required">*</span></label>
+                                <input type="text" id="contact-name" name="name" class="form-input" placeholder="Ví dụ: SteveVN" required maxlength="50">
+                                <span class="form-error" id="name-error">Vui lòng nhập tên của bạn</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contact-email" class="form-label">Địa chỉ Email liên hệ <span class="required">*</span></label>
+                                <input type="email" id="contact-email" name="email" class="form-input" placeholder="email@cuaban.com" required maxlength="80">
+                                <span class="form-error" id="email-error">Vui lòng nhập đúng định dạng email</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contact-subject" class="form-label">Chủ đề cần hỗ trợ</label>
+                                <select id="contact-subject" name="subject" class="form-select">
+                                    <option value="general">Hỏi đáp chung về máy chủ</option>
+                                    <option value="technical">Báo lỗi kỹ thuật / Không vào được game</option>
+                                    <option value="report">Báo cáo người chơi vi phạm</option>
+                                    <option value="feedback">Góp ý cải thiện tính năng</option>
+                                    <option value="cooperation">Hợp tác / Sự kiện</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contact-message" class="form-label">Nội dung chi tiết <span class="required">*</span></label>
+                                <textarea id="contact-message" name="message" class="form-textarea" rows="4" placeholder="Mô tả cụ thể vấn đề hoặc ý kiến của bạn..." required maxlength="1000"></textarea>
+                                <span class="form-error" id="message-error">Vui lòng nhập nội dung ít nhất 10 ký tự</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block" id="btn-submit-contact">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                                <span>Gửi tin nhắn</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a href="#hero" class="logo">
+                        <span class="logo-text">67B67T</span>
+                    </a>
+                    <p class="footer-desc">
+                        Máy chủ Minecraft sinh tồn đỉnh cao và cộng đồng người chơi thân thiện tại Việt Nam. Kết nối đam mê, thỏa sức sáng tạo!
+                    </p>
+                </div>
+
+                <div class="footer-links-group">
+                    <h4 class="footer-heading">Liên Kết Nhanh</h4>
+                    <ul class="footer-links">
+                        <li><a href="#hero">Trang chủ</a></li>
+                        <li><a href="#about">Về chúng tôi</a></li>
+                        <li><a href="#features">Tính năng</a></li>
+                        <li><a href="#how-to-join">Hướng dẫn vào game</a></li>
+                        <li><a href="#community">Cộng đồng</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-group">
+                    <h4 class="footer-heading">Kết Nối</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" class="copy-link-btn" data-link="https://discord.gg/67b67t" data-message="Đã sao chép link Discord!">Discord Server</a></li>
+                        <li><a href="#" class="copy-link-btn" data-link="https://facebook.com/groups/67b67t" data-message="Đã sao chép link Facebook!">Nhóm Facebook</a></li>
+                        <li><a href="#" class="copy-link-btn" data-link="https://t.me/server67b67t" data-message="Đã sao chép link Telegram!">Kênh Telegram</a></li>
+                        <li><a href="mailto:admin@67b67t.site">Email Quản Trị</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-links-group">
+                    <h4 class="footer-heading">Thông Tin</h4>
+                    <div class="footer-server-box">
+                        <p class="server-status-label">Trạng thái: <span class="text-success">● Đang hoạt động</span></p>
+                        <p class="server-ip-copy">IP: <strong>67b67t.site</strong></p>
+                        <button type="button" class="btn btn-outline btn-xs copy-ip-btn" data-ip="67b67t.site">Sao chép IP</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 <strong>67B67T</strong>. Bản quyền thuộc về đội ngũ phát triển 67B67T. Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p>
+                <div class="footer-bottom-links">
+                    <a href="#header" class="back-to-top" id="back-to-top" aria-label="Lên đầu trang">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                        <span>Đầu trang</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Rules Modal -->
+    <div class="modal" id="rules-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+        <div class="modal-overlay" id="modal-overlay"></div>
+        <div class="modal-container glass-panel">
+            <div class="modal-header">
+                <h3 id="modal-title">Quy Tắc Văn Minh & Tham Gia 67B67T</h3>
+                <button type="button" class="modal-close" id="modal-close" aria-label="Đóng cửa sổ">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ol class="rules-list">
+                    <li><strong>Tôn trọng lẫn nhau:</strong> Không dùng từ ngữ thô tục, xúc phạm, phân biệt đối xử hoặc xúc phạm các thành viên khác trong chat.</li>
+                    <li><strong>Chống gian lận:</strong> Nghiêm cấm sử dụng các phần mềm thứ ba can thiệp gameplay như X-ray, Fly, KillAura, Auto-click bất thường gây mất cân bằng.</li>
+                    <li><strong>Bảo vệ hạ tầng:</strong> Không cố ý tạo các cỗ máy lag (lag machines) gây sụt giảm TPS của máy chủ.</li>
+                    <li><strong>Bảo mật tài khoản:</strong> Hãy tự bảo vệ tài khoản cá nhân, không chia sẻ mật khẩu cho người khác. Ban Quản Trị không bao giờ yêu cầu mật khẩu của bạn.</li>
+                    <li><strong>Báo cáo kịp thời:</strong> Khi phát hiện lỗi game (bug) hoặc hành vi vi phạm, hãy báo ngay cho Ban Quản Trị để được xử lý.</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="modal-ok-btn">Tôi Đã Hiểu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

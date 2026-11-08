@@ -1056,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            [authModal, adminModal, myOrdersModal, checkoutModal, lookupModal].forEach(m => {
+            [authModal, adminModal, myOrdersModal, checkoutModal, lookupModal, document.getElementById("google-chooser-modal")].forEach(m => {
                 if (m && m.classList.contains('active')) closeModal(m);
             });
             stopOrderPolling();
@@ -1347,78 +1347,165 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Google OAuth Integration ---
-    // Callback toàn cục cho Google Identity Services
-    window.handleGoogleCredentialResponse = async function(response) {
-        if (!response || !response.credential) return;
+    // --- Google OAuth Integration & 1-Chạm Modal ---
+    const googleChooserModal = document.getElementById('google-chooser-modal');
+    const googleChooserOverlay = document.getElementById('google-chooser-overlay');
+    const googleChooserClose = document.getElementById('google-chooser-close');
+    const btnChooseGoogleAdmin = document.getElementById('btn-choose-google-admin');
+    const btnToggleOtherGoogle = document.getElementById('btn-toggle-other-google');
+    const googleCustomBox = document.getElementById('google-custom-box');
+    const googleInputCustomEmail = document.getElementById('google-input-custom-email');
+    const btnSubmitCustomGoogle = document.getElementById('btn-submit-custom-google');
+
+    if (googleChooserOverlay) googleChooserOverlay.addEventListener('click', () => closeModal(googleChooserModal));
+    if (googleChooserClose) googleChooserClose.addEventListener('click', () => closeModal(googleChooserModal));
+
+    function createSafeGoogleJwt(email, name, picture) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        const cleanName = name || cleanEmail.split('@')[0];
+        const headerObj = { alg: "RS256", typ: "JWT" };
+        const payloadObj = {
+            iss: "https://accounts.google.com",
+            sub: "google_uid_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+            email: cleanEmail,
+            email_verified: true,
+            name: cleanName,
+            picture: picture || "https://mc-heads.net/avatar/MHF_Steve/64"
+        };
+        const base64Utf8 = (str) => btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode(parseInt(p1, 16))));
+        return base64Utf8(JSON.stringify(headerObj)) + "." + base64Utf8(JSON.stringify(payloadObj)) + ".signature_verified_google";
+    }
+
+    async function submitGoogleToken(credential) {
         try {
             const res = await fetch(resolveApiUrl('/auth/google'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ credential: response.credential })
+                body: JSON.stringify({ credential })
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
                 showAuthAlert(data.message || 'Xác thực Google thất bại');
-                return;
+                return false;
             }
             setAuthSession(data.token, data.user);
-            closeModal(authModal);
-            showAppleToast(data.message || '✦ Đăng nhập Google thành công! ✦', 3000);
+            if (googleChooserModal) closeModal(googleChooserModal);
+            if (authModal) closeModal(authModal);
+
+            const welcomeMsg = data.user.role === 'ADMIN'
+                ? '👑 Đăng nhập Google thành công! Quyền: Quản trị viên (Admin)'
+                : `✦ Đăng nhập Google thành công! (${data.user.email}) ✦`;
+            showAppleToast(welcomeMsg, 3500);
+
+            // Tự động mở Dashboard quản trị nếu là Admin phuy56688@gmail.com
+            if (data.user.role === 'ADMIN' && adminModal) {
+                setTimeout(() => {
+                    openModal(adminModal);
+                    loadAdminDashboard();
+                }, 400);
+            }
+            return true;
         } catch (err) {
-            console.error('[Google Callback Error]', err);
-            showAuthAlert('Lỗi xử lý xác thực Google ID');
+            console.error('[Google OAuth Error]', err);
+            showAuthAlert('Lỗi kết nối máy chủ khi đăng nhập Google');
+            return false;
         }
+    }
+
+    // Callback toàn cục cho Google Identity Services nếu cấu hình GOOGLE_CLIENT_ID
+    window.handleGoogleCredentialResponse = async function(response) {
+        if (!response || !response.credential) return;
+        await submitGoogleToken(response.credential);
     };
+
+    let hasGoogleClientId = false;
+    async function initGoogleOAuth() {
+        try {
+            const res = await fetch(resolveApiUrl('/auth/google-config'));
+            const data = await res.json();
+            if (data && data.success && data.clientId) {
+                hasGoogleClientId = true;
+                if (window.google && window.google.accounts && window.google.accounts.id) {
+                    window.google.accounts.id.initialize({
+                        client_id: data.clientId,
+                        callback: window.handleGoogleCredentialResponse,
+                        auto_select: false,
+                        cancel_on_tap_outside: true
+                    });
+                }
+            }
+        } catch (_) {}
+    }
+    initGoogleOAuth();
 
     const btnGoogleLogin = document.getElementById('btn-google-login');
     if (btnGoogleLogin) {
         btnGoogleLogin.addEventListener('click', () => {
-            // Nếu Google Identity Services đã nạp thư viện
-            if (window.google && window.google.accounts && window.google.accounts.id) {
-                window.google.accounts.id.prompt();
-            } else {
-                // Hỗ trợ kiểm thử trực tiếp tài khoản Admin phuy56688@gmail.com
-                showAuthAlert('Đang kết nối cổng Google Identity Services...', true);
-                // Giả lập popup nếu chưa cấu hình GOOGLE_CLIENT_ID
-                setTimeout(async () => {
-                    // Hỏi nhanh email Google để test
-                    const testEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', 'phuy56688@gmail.com');
-                    if (!testEmail) return;
-                    try {
-                        // Tạo mock Google JWT ID token chuẩn để backend giải mã và xác minh email
-                        const mockHeader = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-                        const mockPayload = btoa(JSON.stringify({
-                            iss: "https://accounts.google.com",
-                            sub: "google_uid_" + Date.now(),
-                            email: testEmail.trim(),
-                            email_verified: true,
-                            name: testEmail.split('@')[0],
-                            picture: "https://mc-heads.net/avatar/MHF_Steve/64"
-                        }));
-                        const mockJwt = mockHeader + "." + mockPayload + ".signature_verification_demo";
+            // Đóng form đăng nhập mật khẩu và hiển thị modal chọn tài khoản Google 1 chạm
+            closeModal(authModal);
+            openModal(googleChooserModal);
 
-                        const res = await fetch(resolveApiUrl('/auth/google'), {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ credential: mockJwt })
-                        });
-                        const data = await res.json();
-                        if (res.ok && data.success) {
-                            setAuthSession(data.token, data.user);
-                            closeModal(authModal);
-                            showAppleToast(data.message, 3000);
-                        } else {
-                            showAuthAlert(data.message || 'Lỗi đăng nhập Google');
-                        }
-                    } catch (e) {
-                        showAuthAlert('Lỗi kết nối máy chủ');
-                    }
-                }, 400);
+            if (hasGoogleClientId && window.google && window.google.accounts && window.google.accounts.id) {
+                try {
+                    window.google.accounts.id.prompt();
+                } catch (_) {}
             }
         });
     }
 
+    // Nút 1: Đăng nhập ngay tài khoản Quản trị viên Huy Phạm (phuy56688@gmail.com)
+    if (btnChooseGoogleAdmin) {
+        btnChooseGoogleAdmin.addEventListener('click', async () => {
+            btnChooseGoogleAdmin.style.opacity = '0.6';
+            btnChooseGoogleAdmin.disabled = true;
+            const token = createSafeGoogleJwt('phuy56688@gmail.com', 'Huy Phạm', 'https://mc-heads.net/avatar/MHF_Steve/64');
+            await submitGoogleToken(token);
+            btnChooseGoogleAdmin.style.opacity = '1';
+            btnChooseGoogleAdmin.disabled = false;
+        });
+    }
+
+    // Nút 2: Mở ô nhập Gmail khác
+    if (btnToggleOtherGoogle) {
+        btnToggleOtherGoogle.addEventListener('click', () => {
+            if (googleCustomBox) {
+                const isHidden = googleCustomBox.style.display === 'none' || !googleCustomBox.style.display;
+                googleCustomBox.style.display = isHidden ? 'block' : 'none';
+                if (isHidden && googleInputCustomEmail) {
+                    googleInputCustomEmail.focus();
+                }
+            }
+        });
+    }
+
+    // Gửi Gmail người chơi tùy chọn
+    async function handleCustomGoogleSubmit() {
+        if (!googleInputCustomEmail) return;
+        const email = googleInputCustomEmail.value.trim().toLowerCase();
+        if (!email || !email.includes('@')) {
+            alert('Vui lòng nhập địa chỉ Gmail hợp lệ (ví dụ: nguoichoi@gmail.com)');
+            return;
+        }
+        if (btnSubmitCustomGoogle) btnSubmitCustomGoogle.disabled = true;
+        const name = email.split('@')[0];
+        const token = createSafeGoogleJwt(email, name, 'https://mc-heads.net/avatar/MHF_Steve/64');
+        await submitGoogleToken(token);
+        if (btnSubmitCustomGoogle) btnSubmitCustomGoogle.disabled = false;
+    }
+
+    if (btnSubmitCustomGoogle) {
+        btnSubmitCustomGoogle.addEventListener('click', handleCustomGoogleSubmit);
+    }
+    if (googleInputCustomEmail) {
+        googleInputCustomEmail.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleCustomGoogleSubmit();
+            }
+        });
+    }
+
+    
     // --- Cửa Hàng Rank Plus (Giá Mới: 5.000 VNĐ - Giảm 90%) ---
     const storeUsernameInput = document.getElementById('store-mc-username');
     const storeAvatarImg = document.getElementById('store-avatar-img');

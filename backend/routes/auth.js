@@ -156,6 +156,17 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * GET /api/auth/google-config
+ * Cung cấp Google Client ID cho Frontend khởi tạo Google Identity Services
+ */
+router.get('/google-config', (req, res) => {
+  return res.json({
+    success: true,
+    clientId: config.google.clientId || ''
+  });
+});
+
+/**
  * POST /api/auth/google
  * Đăng nhập hoặc Đăng ký tự động qua Google OAuth ID Token
  * XÁC MINH NGHIÊM NGẶT TẠI BACKEND - CHỐNG GIẢ MẠO

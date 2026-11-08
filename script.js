@@ -2500,7 +2500,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (commandDispatched) {
             showAppleToast(dispatchMessage, 6000);
         } else {
-            showAppleToast('🎉 ĐÃ DUYỆT ĐƠN CHO ' + username + '! (Đã tự động copy lệnh: /setrankplus ' + username + ' — Để web tự cấp thẳng khỏi vào console, bạn vào "Cấu Hình RCON" điền GachCloud API Key nhé)', 7500);
+            showAppleToast('⚠️ ĐÃ DUYỆT ĐƠN TRÊN WEB (Chưa bắn lệnh vào game do chưa có API Key GachCloud) — Đã copy sẵn lệnh: /setrankplus ' + username, 8000);
         }
         loadAdminDashboardData();
     };

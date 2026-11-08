@@ -31,7 +31,7 @@ function getPlayerRankName(p: player) :: string:
 # ------------------------------------------------------------------------------
 # 2. LỆNH CẤP VÀ QUẢN LÝ RANK (DÀNH RIÊNG CHO CONSOLE & master_Sk)
 # ------------------------------------------------------------------------------
-command /setrankplus <player>:
+command /setrankplus <offline player>:
     description: Lệnh cấp Rank Plus trực tiếp từ RCON Backend hoặc Admin master_Sk
     usage: /setrankplus <tên_người_chơi>
     trigger:

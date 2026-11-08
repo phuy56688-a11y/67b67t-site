@@ -2173,7 +2173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const data = await res.json();
                 if (data && data.success) {
-                    if (displayHost) displayHost.textContent = (data.host || 'node1.gachcloud.net') + ':' + (data.port || '25575');
+                    if (displayHost) displayHost.textContent = (data.host || 'node1.gachcloud.net') + ':' + (data.port || '25690');
                     if (data.status && data.status.connected) {
                         dot.className = 'server-status-dot';
                         text.textContent = '🟢 RCON Đã Kết Nối! Khi duyệt đơn, lệnh /setrankplus sẽ kích hoạt tức thì trong game.';
@@ -2181,7 +2181,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     } else {
                         dot.className = 'server-status-dot offline';
-                        text.textContent = '🔴 RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" để điền port và password của server GachCloud.';
+                        if (String(data.port) === '25575') {
+                            text.textContent = '⚠️ Cổng 25575 bị chặn trên GachCloud — Nhấn "Cấu Hình RCON" để điền cổng phụ ở tab Mạng!';
+                        } else {
+                            text.textContent = '⚠️ ' + (data.status ? data.status.message : 'RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" để kiểm tra.');
+                        }
                         text.style.color = '#ff9f0a';
                         return;
                     }
@@ -2191,7 +2195,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Fallback khi chạy tĩnh
         dot.className = 'server-status-dot offline';
-        text.textContent = '⚠️ RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" hoặc gõ /setrankplus trực tiếp trong game.';
+        if (window.location.hostname === '67b67t.site') {
+            text.textContent = '⚠️ GitHub Pages tĩnh — Mở http://localhost:5000 để kết nối RCON tự động, hoặc gõ /setrankplus trong game.';
+        } else {
+            text.textContent = '⚠️ RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" hoặc gõ /setrankplus trực tiếp trong game.';
+        }
         text.style.color = '#ff9f0a';
     }
 
@@ -2316,6 +2324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     actionBtns += '<span style="color: #ff453a; font-size: 0.82rem; font-weight: 600;">✖ Đã từ chối' + (ord.rejection_reason ? ': ' + ord.rejection_reason : '') + '</span>';
                 }
+                actionBtns += ' <button type="button" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);" title="Sao chép lệnh chạy trong Minecraft hoặc Console GachCloud" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px;">📋 Lệnh Game</button>';
 
                 html += '<div class="admin-order-card">' +
                     '<div class="admin-order-header">' +
@@ -2490,9 +2499,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnSaveRcon) {
         btnSaveRcon.addEventListener('click', async () => {
             const host = (document.getElementById('rcon-cfg-host') || {}).value || 'node1.gachcloud.net';
-            const port = (document.getElementById('rcon-cfg-port') || {}).value || '25575';
-            const password = (document.getElementById('rcon-cfg-password') || {}).value || '';
+            const port = ((document.getElementById('rcon-cfg-port') || {}).value || '').trim();
+            const password = ((document.getElementById('rcon-cfg-password') || {}).value || '').trim();
             const token = getAuthToken();
+
+            if (!port) {
+                showAppleToast('⚠️ Vui lòng nhập số cổng phụ được cấp ở tab "Mạng" trên GachCloud.', 5000);
+                return;
+            }
+
+            if (port === '25575') {
+                showAppleToast('⚠️ Cổng 25575 bị chặn trên GachCloud! Vào tab Mạng trên panel GachCloud để lấy cổng phụ.', 6500);
+            }
 
             btnSaveRcon.disabled = true;
             btnSaveRcon.textContent = 'Đang kiểm tra...';
@@ -2506,14 +2524,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify({ host, port, password })
                 });
+
+                if (res.status === 405 || res.status === 404) {
+                    showAppleToast('⚠️ Bạn đang xem web trên GitHub Pages tĩnh (67b67t.site). Hãy mở http://localhost:5000 trên máy tính để lưu cấu hình RCON!', 7500);
+                    return;
+                }
+
+                if (res.status === 401 || res.status === 403) {
+                    showAppleToast('⚠️ Cần đăng nhập tài khoản Admin phuy56688@gmail.com trên backend để lưu RCON.', 5500);
+                    return;
+                }
+
                 const data = await res.json();
                 if (data.testResult && data.testResult.connected) {
-                    showAppleToast('✅ ' + data.testResult.message, 4500);
+                    showAppleToast('✅ ' + data.testResult.message, 5000);
                 } else {
-                    showAppleToast('⚠️ ' + (data.testResult ? data.testResult.message : 'Chưa kết nối được cổng RCON này.'), 5000);
+                    const msg = (data.testResult && data.testResult.message) ? data.testResult.message : (data.message || 'Chưa kết nối được cổng RCON này.');
+                    showAppleToast('⚠️ ' + msg, 7000);
                 }
             } catch (err) {
-                showAppleToast('⚠️ Lỗi gửi cấu hình RCON tới backend.', 3000);
+                if (window.location.hostname === '67b67t.site') {
+                    showAppleToast('⚠️ Trang 67b67t.site là trang tĩnh. Hãy mở http://localhost:5000 trên trình duyệt để kết nối RCON!', 7500);
+                } else {
+                    showAppleToast('⚠️ Lỗi gửi cấu hình RCON tới backend: ' + err.message, 4500);
+                }
             } finally {
                 btnSaveRcon.disabled = false;
                 btnSaveRcon.textContent = 'Lưu & Test Kết Nối';

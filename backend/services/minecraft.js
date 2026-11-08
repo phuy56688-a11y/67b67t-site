@@ -53,10 +53,14 @@ async function executeRconCommand(command) {
     if (rcon) {
       try { await rcon.end(); } catch (_) {}
     }
+    let errorDetail = err.message;
+    if (Number(config.minecraft.port) === 25575) {
+      errorDetail += ' (LƯU Ý: Cổng 25575 mặc định bị chặn trên GachCloud! Vào tab Mạng/Network trên GachCloud lấy cổng phụ rồi điền vào server.properties)';
+    }
     return {
       success: false,
       response: '',
-      error: `Lỗi kết nối RCON Minecraft (${config.minecraft.host}:${config.minecraft.port}): ${err.message}`
+      error: `Lỗi kết nối RCON Minecraft (${config.minecraft.host}:${config.minecraft.port}): ${errorDetail}`
     };
   }
 }
@@ -140,7 +144,7 @@ async function processPendingDeliveries() {
            WHERE id = ?`,
           [result.error, order.id]
         );
-        console.warn(`⏳ [Retry Worker] Thử lại đơn #${order.order_id} chưa thành công: ${result.error}`);
+        console.warn(`⚠️ [Retry Worker] Thử lại đơn #${order.order_id} chưa thành công: ${result.error}`);
       }
     }
   } catch (err) {
@@ -156,7 +160,7 @@ async function testConnection() {
   if (!config.minecraft.password) {
     return {
       connected: false,
-      message: 'Chưa điền RCON_PASSWORD trong file .env hoặc cấu hình quản trị'
+      message: 'Chưa điền RCON Password. Hãy nhập mật khẩu trong server.properties vào ô RCON Password.'
     };
   }
   let rcon;
@@ -178,9 +182,13 @@ async function testConnection() {
     if (rcon) {
       try { await rcon.end(); } catch (_) {}
     }
+    let errorDetail = err.message;
+    if (Number(config.minecraft.port) === 25575) {
+      errorDetail += ' (CẢNH BÁO: Cổng 25575 bị chặn trên GachCloud! Bạn phải vào tab "Mạng" trên GachCloud lấy cổng phụ được cấp rồi điền vào server.properties)';
+    }
     return {
       connected: false,
-      message: `Lỗi kết nối (${config.minecraft.host}:${config.minecraft.port}): ${err.message}`
+      message: `Lỗi kết nối (${config.minecraft.host}:${config.minecraft.port}): ${errorDetail}`
     };
   }
 }

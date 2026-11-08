@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     copyIpBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const ip = btn.getAttribute('data-ip') || '67b67t.site';
+            const ip = btn.getAttribute('data-ip') || '67b67t.site:25690';
             
             // Micro-interaction bounce
             btn.style.transform = 'scale(0.96)';

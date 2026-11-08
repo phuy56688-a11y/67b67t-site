@@ -932,14 +932,82 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* --------------------------------------------------------------------------
-       14. Store Controller & Automatic ZaloPay Provisioning
+       14. Hệ Thống Tài Khoản, Đăng Nhập Google, Duyệt Đơn Thủ Công & Admin Dashboard
        -------------------------------------------------------------------------- */
-    const storeUsernameInput = document.getElementById('store-mc-username');
-    const storeAvatarImg = document.getElementById('store-avatar-img');
-    const storeInputStatus = document.getElementById('store-input-status');
-    const storeInputHint = document.getElementById('store-input-hint');
-    const btnOpenCheckout = document.getElementById('btn-open-checkout');
-    const btnOpenLookup = document.getElementById('btn-open-lookup');
+
+    // Helper: Định vị API URL (tự động thích ứng local/production)
+    function resolveApiUrl(path) {
+        if (window.location.port === '5000') {
+            return '/api' + path;
+        }
+        const isLocal = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.protocol === 'file:';
+        const base = isLocal ? 'http://localhost:5000/api' : '/api';
+        return base + path;
+    }
+
+    // --- Quản Lý Phiên Đăng Nhập (Auth State Management) ---
+    const AUTH_TOKEN_KEY = '67b67t_auth_token';
+    const AUTH_USER_KEY = '67b67t_user_profile';
+
+    function getAuthToken() {
+        return localStorage.getItem(AUTH_TOKEN_KEY);
+    }
+
+    function setAuthSession(token, user) {
+        if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+        if (user) localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+        updateAuthUI(user);
+    }
+
+    function clearAuthSession() {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem(AUTH_USER_KEY);
+        updateAuthUI(null);
+        showAppleToast('Đã đăng xuất tài khoản.', 2000);
+    }
+
+    function getCurrentUser() {
+        try {
+            const raw = localStorage.getItem(AUTH_USER_KEY);
+            return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    // DOM Elements - Auth & Dropdown
+    const userAuthWidget = document.getElementById('user-auth-widget');
+    const btnOpenAuth = document.getElementById('btn-open-auth');
+    const navUserAvatar = document.getElementById('nav-user-avatar');
+    const navAuthIcon = document.getElementById('nav-auth-icon');
+    const navAuthLabel = document.getElementById('nav-auth-label');
+    const navAdminCrown = document.getElementById('nav-admin-crown');
+
+    const userDropdownMenu = document.getElementById('user-dropdown-menu');
+    const dropdownUserAvatar = document.getElementById('dropdown-user-avatar');
+    const dropdownUserName = document.getElementById('dropdown-user-name');
+    const dropdownUserEmail = document.getElementById('dropdown-user-email');
+    const dropdownUserRole = document.getElementById('dropdown-user-role');
+    const btnDropdownAdmin = document.getElementById('btn-dropdown-admin');
+    const btnDropdownMyOrders = document.getElementById('btn-dropdown-my-orders');
+    const btnDropdownLogout = document.getElementById('btn-dropdown-logout');
+
+    // Modals
+    const authModal = document.getElementById('auth-modal');
+    const authModalOverlay = document.getElementById('auth-modal-overlay');
+    const authModalClose = document.getElementById('auth-modal-close');
+    const authAlertBox = document.getElementById('auth-alert-box');
+
+    const adminModal = document.getElementById('admin-modal');
+    const adminModalOverlay = document.getElementById('admin-modal-overlay');
+    const adminModalClose = document.getElementById('admin-modal-close');
+
+    const myOrdersModal = document.getElementById('my-orders-modal');
+    const myOrdersOverlay = document.getElementById('my-orders-overlay');
+    const myOrdersClose = document.getElementById('my-orders-close');
+    const myOrdersContent = document.getElementById('my-orders-content');
 
     const checkoutModal = document.getElementById('checkout-modal');
     const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
@@ -953,68 +1021,412 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDoLookup = document.getElementById('btn-do-lookup');
     const lookupResults = document.getElementById('lookup-results');
 
-    // API Resolver Helper
-    function resolveApiUrl(path) {
-        if (window.location.port === '5000') {
-            return '/api' + path;
-        }
-        const isLocal = window.location.hostname === 'localhost' || 
-                        window.location.hostname === '127.0.0.1' || 
-                        window.location.protocol === 'file:';
-        const base = isLocal ? 'http://localhost:5000/api' : '/api';
-        return base + path;
-    }
-
-    // Modal Handlers
-    function openCheckoutModal() {
-        if (!checkoutModal) return;
-        checkoutModal.classList.add('active');
-        checkoutModal.setAttribute('aria-hidden', 'false');
+    // Generic Modal Open/Close helpers
+    function openModal(el) {
+        if (!el) return;
+        el.classList.add('active');
+        el.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 
-    function closeCheckoutModal() {
-        if (!checkoutModal) return;
-        checkoutModal.classList.remove('active');
-        checkoutModal.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        if (activePollingInterval) {
-            clearInterval(activePollingInterval);
-            activePollingInterval = null;
-        }
-    }
-
-    function openLookupModal() {
-        if (!lookupModal) return;
-        lookupModal.classList.add('active');
-        lookupModal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        if (lookupInput) {
-            setTimeout(() => lookupInput.focus(), 150);
-        }
-    }
-
-    function closeLookupModal() {
-        if (!lookupModal) return;
-        lookupModal.classList.remove('active');
-        lookupModal.setAttribute('aria-hidden', 'true');
+    function closeModal(el) {
+        if (!el) return;
+        el.classList.remove('active');
+        el.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
 
-    if (checkoutModalOverlay) checkoutModalOverlay.addEventListener('click', closeCheckoutModal);
-    if (checkoutModalClose) checkoutModalClose.addEventListener('click', closeCheckoutModal);
-    if (lookupModalOverlay) lookupModalOverlay.addEventListener('click', closeLookupModal);
-    if (lookupModalClose) lookupModalClose.addEventListener('click', closeLookupModal);
-    if (btnOpenLookup) btnOpenLookup.addEventListener('click', openLookupModal);
+    // Modal close listeners
+    if (authModalOverlay) authModalOverlay.addEventListener('click', () => closeModal(authModal));
+    if (authModalClose) authModalClose.addEventListener('click', () => closeModal(authModal));
+    if (adminModalOverlay) adminModalOverlay.addEventListener('click', () => closeModal(adminModal));
+    if (adminModalClose) adminModalClose.addEventListener('click', () => closeModal(adminModal));
+    if (myOrdersOverlay) myOrdersOverlay.addEventListener('click', () => closeModal(myOrdersModal));
+    if (myOrdersClose) myOrdersClose.addEventListener('click', () => closeModal(myOrdersModal));
+    if (checkoutModalOverlay) checkoutModalOverlay.addEventListener('click', () => {
+        closeModal(checkoutModal);
+        stopOrderPolling();
+    });
+    if (checkoutModalClose) checkoutModalClose.addEventListener('click', () => {
+        closeModal(checkoutModal);
+        stopOrderPolling();
+    });
+    if (lookupModalOverlay) lookupModalOverlay.addEventListener('click', () => closeModal(lookupModal));
+    if (lookupModalClose) lookupModalClose.addEventListener('click', () => closeModal(lookupModal));
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (checkoutModal && checkoutModal.classList.contains('active')) closeCheckoutModal();
-            if (lookupModal && lookupModal.classList.contains('active')) closeLookupModal();
+            [authModal, adminModal, myOrdersModal, checkoutModal, lookupModal].forEach(m => {
+                if (m && m.classList.contains('active')) closeModal(m);
+            });
+            stopOrderPolling();
+            closeUserDropdown();
         }
     });
 
-    // Username Validation & Avatar Skin Loading
+    // Cập nhật giao diện thanh điều hướng theo trạng thái đăng nhập
+    function updateAuthUI(user) {
+        if (user && user.email) {
+            // Đã đăng nhập
+            if (navAuthIcon) navAuthIcon.style.display = 'none';
+            if (navUserAvatar) {
+                navUserAvatar.style.display = 'inline-block';
+                navUserAvatar.src = user.avatar || 'https://mc-heads.net/avatar/MHF_Steve/32';
+            }
+            if (navAuthLabel) {
+                navAuthLabel.textContent = user.name ? user.name.split(' ')[0] : user.email.split('@')[0];
+            }
+
+            // Kiểm tra quyền Admin (Chỉ duy nhất phuy56688@gmail.com)
+            const isAdmin = user.role === 'ADMIN' || user.email.toLowerCase() === 'phuy56688@gmail.com';
+            if (navAdminCrown) {
+                navAdminCrown.style.display = isAdmin ? 'inline-block' : 'none';
+            }
+
+            // Dropdown Menu
+            if (dropdownUserAvatar) dropdownUserAvatar.src = user.avatar || 'https://mc-heads.net/avatar/MHF_Steve/48';
+            if (dropdownUserName) dropdownUserName.textContent = user.name || user.email.split('@')[0];
+            if (dropdownUserEmail) dropdownUserEmail.textContent = user.email;
+            if (dropdownUserRole) {
+                dropdownUserRole.textContent = isAdmin ? '👑 QUẢN TRỊ VIÊN' : 'THÀNH VIÊN';
+                dropdownUserRole.className = 'badge-role ' + (isAdmin ? 'role-admin' : '');
+            }
+            if (btnDropdownAdmin) {
+                btnDropdownAdmin.style.display = isAdmin ? 'flex' : 'none';
+            }
+        } else {
+            // Khách chưa đăng nhập
+            if (navAuthIcon) navAuthIcon.style.display = 'inline-block';
+            if (navUserAvatar) navUserAvatar.style.display = 'none';
+            if (navAuthLabel) navAuthLabel.textContent = 'Đăng Nhập';
+            if (navAdminCrown) navAdminCrown.style.display = 'none';
+            if (btnDropdownAdmin) btnDropdownAdmin.style.display = 'none';
+        }
+    }
+
+    // Toggle Dropdown Menu
+    function toggleUserDropdown() {
+        if (!userDropdownMenu) return;
+        const isActive = userDropdownMenu.classList.toggle('active');
+        userDropdownMenu.setAttribute('aria-hidden', !isActive);
+    }
+
+    function closeUserDropdown() {
+        if (userDropdownMenu && userDropdownMenu.classList.contains('active')) {
+            userDropdownMenu.classList.remove('active');
+            userDropdownMenu.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    if (btnOpenAuth) {
+        btnOpenAuth.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const user = getCurrentUser();
+            if (user) {
+                toggleUserDropdown();
+            } else {
+                openModal(authModal);
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (userAuthWidget && !userAuthWidget.contains(e.target)) {
+            closeUserDropdown();
+        }
+    });
+
+    if (btnDropdownLogout) {
+        btnDropdownLogout.addEventListener('click', () => {
+            closeUserDropdown();
+            clearAuthSession();
+        });
+    }
+
+    if (btnDropdownMyOrders) {
+        btnDropdownMyOrders.addEventListener('click', () => {
+            closeUserDropdown();
+            openMyOrdersModal();
+        });
+    }
+
+    if (btnDropdownAdmin) {
+        btnDropdownAdmin.addEventListener('click', () => {
+            closeUserDropdown();
+            openAdminDashboardModal();
+        });
+    }
+
+    // Kiểm tra phiên đăng nhập từ máy chủ khi load trang
+    async function checkServerSession() {
+        const token = getAuthToken();
+        if (!token) {
+            updateAuthUI(null);
+            return;
+        }
+        try {
+            const res = await fetch(resolveApiUrl('/auth/me'), {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            if (res.ok && data.success && data.user) {
+                setAuthSession(token, data.user);
+            } else {
+                clearAuthSession();
+            }
+        } catch (_) {
+            // Giữ phiên cache nếu mất mạng tạm thời
+            updateAuthUI(getCurrentUser());
+        }
+    }
+    checkServerSession();
+
+    // --- Xử Lý Tabs Trong Auth Modal ---
+    const tabBtnLogin = document.getElementById('tab-btn-login');
+    const tabBtnRegister = document.getElementById('tab-btn-register');
+    const tabBtnForgot = document.getElementById('tab-btn-forgot');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+    const formForgot = document.getElementById('form-forgot');
+
+    function switchAuthTab(tabName) {
+        if (authAlertBox) authAlertBox.style.display = 'none';
+        [tabBtnLogin, tabBtnRegister, tabBtnForgot].forEach(btn => btn && btn.classList.remove('active'));
+        [formLogin, formRegister, formForgot].forEach(form => form && form.classList.remove('active'));
+
+        if (tabName === 'login') {
+            if (tabBtnLogin) tabBtnLogin.classList.add('active');
+            if (formLogin) formLogin.classList.add('active');
+        } else if (tabName === 'register') {
+            if (tabBtnRegister) tabBtnRegister.classList.add('active');
+            if (formRegister) formRegister.classList.add('active');
+        } else if (tabName === 'forgot') {
+            if (tabBtnForgot) tabBtnForgot.classList.add('active');
+            if (formForgot) formForgot.classList.add('active');
+        }
+    }
+
+    if (tabBtnLogin) tabBtnLogin.addEventListener('click', () => switchAuthTab('login'));
+    if (tabBtnRegister) tabBtnRegister.addEventListener('click', () => switchAuthTab('register'));
+    if (tabBtnForgot) tabBtnForgot.addEventListener('click', () => switchAuthTab('forgot'));
+
+    function showAuthAlert(msg, isSuccess = false) {
+        if (!authAlertBox) return;
+        authAlertBox.className = 'auth-alert ' + (isSuccess ? 'alert-success' : 'alert-error');
+        authAlertBox.textContent = msg;
+        authAlertBox.style.display = 'block';
+    }
+
+    // Xử lý Đăng Nhập Email/Password
+    if (formLogin) {
+        formLogin.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const btnSubmit = document.getElementById('btn-submit-login');
+
+            if (!email || !password) return showAuthAlert('Vui lòng điền đầy đủ email và mật khẩu');
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            try {
+                const res = await fetch(resolveApiUrl('/auth/login'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showAuthAlert(data.message || 'Đăng nhập thất bại');
+                    return;
+                }
+                setAuthSession(data.token, data.user);
+                closeModal(authModal);
+                showAppleToast('✦ Đăng nhập thành công! ✦', 2500);
+            } catch (err) {
+                showAuthAlert('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+            } finally {
+                if (btnSubmit) btnSubmit.disabled = false;
+            }
+        });
+    }
+
+    // Xử lý Đăng Ký Tài Khoản
+    if (formRegister) {
+        formRegister.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const btnSubmit = document.getElementById('btn-submit-register');
+
+            if (!email || password.length < 6) {
+                return showAuthAlert('Mật khẩu phải chứa ít nhất 6 ký tự');
+            }
+            if (btnSubmit) btnSubmit.disabled = true;
+
+            try {
+                const res = await fetch(resolveApiUrl('/auth/register'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showAuthAlert(data.message || 'Đăng ký thất bại');
+                    return;
+                }
+                setAuthSession(data.token, data.user);
+                closeModal(authModal);
+                showAppleToast('✦ Tạo tài khoản thành công! ✦', 2500);
+            } catch (err) {
+                showAuthAlert('Lỗi kết nối máy chủ');
+            } finally {
+                if (btnSubmit) btnSubmit.disabled = false;
+            }
+        });
+    }
+
+    // Xử lý Quên Mật Khẩu
+    const btnSendResetCode = document.getElementById('btn-send-reset-code');
+    const forgotStep1 = document.getElementById('forgot-step-1');
+    const forgotStep2 = document.getElementById('forgot-step-2');
+    const btnSubmitNewPassword = document.getElementById('btn-submit-new-password');
+
+    if (btnSendResetCode) {
+        btnSendResetCode.addEventListener('click', async () => {
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) return showAuthAlert('Vui lòng nhập địa chỉ email');
+
+            btnSendResetCode.disabled = true;
+            try {
+                const res = await fetch(resolveApiUrl('/auth/forgot-password'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                showAuthAlert(data.message + (data.reset_code_dev ? ' (Mã test: ' + data.reset_code_dev + ')' : ''), true);
+                if (forgotStep1) forgotStep1.style.display = 'none';
+                if (forgotStep2) forgotStep2.style.display = 'block';
+            } catch (err) {
+                showAuthAlert('Lỗi gửi mã khôi phục');
+            } finally {
+                btnSendResetCode.disabled = false;
+            }
+        });
+    }
+
+    if (btnSubmitNewPassword) {
+        btnSubmitNewPassword.addEventListener('click', async () => {
+            const email = document.getElementById('forgot-email').value.trim();
+            const code = document.getElementById('reset-code').value.trim();
+            const newPassword = document.getElementById('reset-new-password').value;
+
+            if (!code || newPassword.length < 6) {
+                return showAuthAlert('Vui lòng nhập mã xác nhận và mật khẩu mới từ 6 ký tự');
+            }
+            btnSubmitNewPassword.disabled = true;
+            try {
+                const res = await fetch(resolveApiUrl('/auth/reset-password'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code, newPassword })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    showAuthAlert(data.message || 'Không thể đặt lại mật khẩu');
+                    return;
+                }
+                showAuthAlert(data.message, true);
+                setTimeout(() => switchAuthTab('login'), 1800);
+            } catch (err) {
+                showAuthAlert('Lỗi kết nối máy chủ');
+            } finally {
+                btnSubmitNewPassword.disabled = false;
+            }
+        });
+    }
+
+    // --- Google OAuth Integration ---
+    // Callback toàn cục cho Google Identity Services
+    window.handleGoogleCredentialResponse = async function(response) {
+        if (!response || !response.credential) return;
+        try {
+            const res = await fetch(resolveApiUrl('/auth/google'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                showAuthAlert(data.message || 'Xác thực Google thất bại');
+                return;
+            }
+            setAuthSession(data.token, data.user);
+            closeModal(authModal);
+            showAppleToast(data.message || '✦ Đăng nhập Google thành công! ✦', 3000);
+        } catch (err) {
+            console.error('[Google Callback Error]', err);
+            showAuthAlert('Lỗi xử lý xác thực Google ID');
+        }
+    };
+
+    const btnGoogleLogin = document.getElementById('btn-google-login');
+    if (btnGoogleLogin) {
+        btnGoogleLogin.addEventListener('click', () => {
+            // Nếu Google Identity Services đã nạp thư viện
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+                window.google.accounts.id.prompt();
+            } else {
+                // Hỗ trợ kiểm thử trực tiếp tài khoản Admin phuy56688@gmail.com
+                showAuthAlert('Đang kết nối cổng Google Identity Services...', true);
+                // Giả lập popup nếu chưa cấu hình GOOGLE_CLIENT_ID
+                setTimeout(async () => {
+                    // Hỏi nhanh email Google để test
+                    const testEmail = prompt('Nhập địa chỉ Email Google của bạn để đăng nhập:', 'phuy56688@gmail.com');
+                    if (!testEmail) return;
+                    try {
+                        // Tạo mock Google JWT ID token chuẩn để backend giải mã và xác minh email
+                        const mockHeader = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+                        const mockPayload = btoa(JSON.stringify({
+                            iss: "https://accounts.google.com",
+                            sub: "google_uid_" + Date.now(),
+                            email: testEmail.trim(),
+                            email_verified: true,
+                            name: testEmail.split('@')[0],
+                            picture: "https://mc-heads.net/avatar/MHF_Steve/64"
+                        }));
+                        const mockJwt = mockHeader + "." + mockPayload + ".signature_verification_demo";
+
+                        const res = await fetch(resolveApiUrl('/auth/google'), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ credential: mockJwt })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            setAuthSession(data.token, data.user);
+                            closeModal(authModal);
+                            showAppleToast(data.message, 3000);
+                        } else {
+                            showAuthAlert(data.message || 'Lỗi đăng nhập Google');
+                        }
+                    } catch (e) {
+                        showAuthAlert('Lỗi kết nối máy chủ');
+                    }
+                }, 400);
+            }
+        });
+    }
+
+    // --- Cửa Hàng Rank Plus (Giá Mới: 5.000 VNĐ - Giảm 90%) ---
+    const storeUsernameInput = document.getElementById('store-mc-username');
+    const storeAvatarImg = document.getElementById('store-avatar-img');
+    const storeInputStatus = document.getElementById('store-input-status');
+    const storeInputHint = document.getElementById('store-input-hint');
+    const btnOpenCheckout = document.getElementById('btn-open-checkout');
+    const btnOpenLookup = document.getElementById('btn-open-lookup');
+
     const MC_NAME_REGEX = /^[a-zA-Z0-9_]{3,16}$/;
     let avatarDebounceTimer = null;
 
@@ -1058,8 +1470,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let activePollingInterval = null;
+    function stopOrderPolling() {
+        if (activePollingInterval) {
+            clearInterval(activePollingInterval);
+            activePollingInterval = null;
+        }
+    }
 
-    // Checkout Flow: Triggered on "Mua Bằng ZaloPay"
+    // Mua Rank Plus: Kích hoạt quy trình tạo đơn hàng
     if (btnOpenCheckout) {
         btnOpenCheckout.addEventListener('click', async () => {
             const username = storeUsernameInput ? storeUsernameInput.value.trim() : '';
@@ -1074,29 +1492,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Open Checkout Modal with Loading skeleton
-            openCheckoutModal();
+            openModal(checkoutModal);
             checkoutModalBody.innerHTML = '<div style="text-align: center; padding: 40px 10px;">' +
                 '<div class="pulse-dot" style="margin: 0 auto 16px; width: 14px; height: 14px; background: #2997ff;"></div>' +
-                '<p style="color: var(--text-secondary); font-size: 0.95rem;">Đang kết nối cổng ZaloPay & khởi tạo đơn hàng...</p>' +
+                '<p style="color: var(--text-secondary); font-size: 0.95rem;">Đang tạo đơn hàng Rank Plus (5.000 VNĐ)...</p>' +
                 '</div>';
 
             try {
+                const token = getAuthToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
                 const response = await fetch(resolveApiUrl('/payment/create'), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username, rankId: 'plus' })
+                    headers: headers,
+                    body: JSON.stringify({ username: username })
                 });
 
                 const data = await response.json();
-
                 if (!response.ok || !data.success) {
-                    renderCheckoutError(data.message || 'Không thể tạo đơn hàng');
+                    renderCheckoutError(data.error || data.message || 'Không thể tạo đơn hàng');
                     return;
                 }
 
-                // Render Checkout State based on configuration
-                renderCheckoutView(data, username);
+                // Render giao diện thanh toán chuyển khoản & nộp biên lai
+                renderManualCheckoutView(data, username);
 
             } catch (err) {
                 console.error('[Create Order Error]', err);
@@ -1116,113 +1536,196 @@ document.addEventListener('DOMContentLoaded', () => {
             '</div>';
     }
 
-    function renderCheckoutView(orderData, username) {
+    // Render quy trình thanh toán thủ công 5.000 VNĐ + Form nộp biên lai
+    function renderManualCheckoutView(orderData, username) {
         const orderId = orderData.order_id;
-        const formattedAmount = (orderData.amount || 50000).toLocaleString('vi-VN');
-        const isConfigured = orderData.configured === true;
+        const amount = orderData.amount || 5000;
+        const oldAmount = orderData.old_amount || 50000;
+        const manual = orderData.manual_payment || {
+            bankName: 'MB Bank (Quân Đội)',
+            accountNo: '0367676767',
+            accountName: 'PHAM HUY',
+            transferContent: '67B67T ' + orderId,
+            qrUrl: 'https://api.vietqr.io/image/970422-0367676767-print.jpg?amount=5000&addInfo=67B67T%20' + orderId + '&accountName=PHAM%20HUY'
+        };
 
-        let contentHtml = '<div class="checkout-order-summary">' +
+        let html = '<div class="checkout-order-summary">' +
             '<img src="https://mc-heads.net/avatar/' + encodeURIComponent(username) + '/52" alt="' + username + '" class="checkout-avatar" onerror="this.src=\'https://mc-heads.net/avatar/MHF_Steve/52\'">' +
             '<div class="checkout-meta">' +
             '<strong>' + username + ' &bull; Rank Plus</strong>' +
             '<div class="checkout-order-id">Mã đơn: ' + orderId + '</div>' +
-            '<div class="checkout-amount">' + formattedAmount + ' VNĐ</div>' +
+            '<div class="checkout-amount"><del style="color: var(--text-tertiary); font-size: 0.88rem; margin-right: 6px;">' + oldAmount.toLocaleString('vi-VN') + ' đ</del> <span style="color: #30d158; font-weight: 800;">' + amount.toLocaleString('vi-VN') + ' VNĐ</span> <span class="badge-tag-discount">-90%</span></div>' +
             '</div>' +
             '</div>';
 
-        if (!isConfigured) {
-            // Unconfigured State: Show graceful alert banner, no fake payment simulation
-            contentHtml += '<div class="payment-unconfigured-banner">' +
-                '<div class="alert-icon">⚙️</div>' +
-                '<h4>CỔNG ZALOPAY ĐANG CHỜ CẤU HÌNH API</h4>' +
-                '<p>Hệ thống máy chủ đã ghi nhận đơn hàng nhưng Cổng thanh toán ZaloPay Merchant đang chờ quản trị viên điền App ID và Secret Key vào <code>backend/.env</code>.</p>' +
-                '<p style="font-size: 0.82rem; color: var(--text-tertiary);">Tuyệt đối không giả lập thanh toán ảo hoặc xác nhận qua ảnh chụp màn hình để bảo đảm an toàn dữ liệu.</p>' +
-                '<div style="margin-top: 14px;">' +
-                '<span class="order-notice-code">Mã đơn lưu trữ: ' + orderId + '</span>' +
-                '</div>' +
-                '</div>' +
-                '<div style="display: flex; gap: 10px;">' +
-                '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
-                '<span>Đã Hiểu</span>' +
-                '</button>' +
-                '</div>';
-            checkoutModalBody.innerHTML = contentHtml;
-        } else {
-            // Configured State: Show dynamic QR code & start real-time polling
-            const qrUrl = orderData.qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(orderData.order_url || orderId));
-            const payUrl = orderData.order_url || '#';
+        html += '<div class="manual-payment-box">' +
+            '<div style="text-align: center; margin-bottom: 14px;">' +
+            '<span style="font-size: 0.8rem; font-weight: 700; color: #ff9f0a; letter-spacing: 0.06em; text-transform: uppercase;">BƯỚC 1: CHUYỂN KHOẢN 5.000 VNĐ</span>' +
+            '</div>' +
+            '<div style="text-align: center; margin-bottom: 16px;">' +
+            '<div class="payment-qr-frame">' +
+            '<img src="' + manual.qrUrl + '" alt="QR Chuyển khoản 5000đ" style="width: 200px; height: 200px; display: block; border-radius: 8px;">' +
+            '</div>' +
+            '<p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 6px;">Quét mã QR bằng mọi App Ngân Hàng, ZaloPay, MoMo</p>' +
+            '</div>' +
+            '<div class="manual-bank-row">' +
+            '<span>Ngân hàng:</span><span class="bank-val">' + manual.bankName + '</span>' +
+            '</div>' +
+            '<div class="manual-bank-row">' +
+            '<span>Số tài khoản:</span>' +
+            '<div><span class="bank-val">' + manual.accountNo + '</span><button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + manual.accountNo + '\'); alert(\'Đã copy số tài khoản!\');">Sao Chép</button></div>' +
+            '</div>' +
+            '<div class="manual-bank-row">' +
+            '<span>Chủ tài khoản:</span><span class="bank-val">' + manual.accountName + '</span>' +
+            '</div>' +
+            '<div class="manual-bank-row">' +
+            '<span>Số tiền:</span><span class="bank-val" style="color: #30d158;">5.000 VNĐ</span>' +
+            '</div>' +
+            '<div class="manual-bank-row">' +
+            '<span>Nội dung chuyển:</span>' +
+            '<div><span class="bank-val" style="color: #2997ff;">' + manual.transferContent + '</span><button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + manual.transferContent + '\'); alert(\'Đã copy nội dung chuyển tiền!\');">Sao Chép</button></div>' +
+            '</div>' +
+            '</div>';
 
-            contentHtml += '<div class="payment-qr-container">' +
-                '<div class="payment-qr-frame">' +
-                '<img src="' + qrUrl + '" alt="Mã QR ZaloPay" id="zalopay-qr-code">' +
-                '</div>' +
-                '<div class="payment-status-pulsing">' +
-                '<span class="pulse-dot"></span>' +
-                '<span>Đang chờ bạn quét mã thanh toán ZaloPay...</span>' +
-                '</div>' +
-                '<div class="payment-countdown" id="checkout-countdown">Đơn hàng tự động hết hạn sau 15:00</div>' +
-                '<a href="' + payUrl + '" target="_blank" rel="noopener noreferrer" class="btn-zalopay-open">' +
-                '<svg class="zalopay-icon-svg" viewBox="0 0 32 32" fill="currentColor">' +
-                '<path d="M4 8a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8zm7.5 4.5v1.8h4.8L11.5 20v1.8h9v-1.8h-4.8l4.8-5.7v-1.8h-9z"/>' +
-                '</svg>' +
-                '<span>Mở Trực Tiếp Bằng ZaloPay</span>' +
-                '</a>' +
-                '</div>';
-            checkoutModalBody.innerHTML = contentHtml;
+        // Form BƯỚC 2: Gửi biên lai
+        html += '<form id="form-submit-receipt" class="receipt-upload-form">' +
+            '<h5>BƯỚC 2: GỬI BIÊN LAI XÁC NHẬN CHO ADMIN</h5>' +
+            '<p>Sau khi chuyển khoản 5.000đ, vui lòng tải ảnh chụp màn hình hoặc nhập mã giao dịch để Admin kiểm tra và duyệt rank.</p>' +
+            '<div class="file-input-wrap">' +
+            '<label for="receipt-file-input" class="custom-file-upload" id="receipt-file-label">' +
+            '📷 Nhấp để tải ảnh biên lai (PNG, JPG)' +
+            '</label>' +
+            '<input type="file" id="receipt-file-input" accept="image/*" style="display: none;">' +
+            '</div>' +
+            '<div style="margin-bottom: 14px;">' +
+            '<input type="text" id="receipt-note-input" class="store-input" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; width: 100%; font-size: 0.88rem;" placeholder="Mã giao dịch ngân hàng / tên người chuyển...">' +
+            '</div>' +
+            '<button type="submit" class="btn btn-apple-primary btn-block" id="btn-send-receipt">' +
+            '<span>Gửi Biên Lai Xác Nhận</span>' +
+            '</button>' +
+            '</form>';
 
-            // Start countdown timer
-            let remainingSec = 15 * 60;
-            const timerEl = document.getElementById('checkout-countdown');
-            const countdownInterval = setInterval(() => {
-                remainingSec--;
-                if (remainingSec <= 0) {
-                    clearInterval(countdownInterval);
-                    if (timerEl) timerEl.textContent = 'Đơn hàng đã hết hạn!';
-                    if (activePollingInterval) clearInterval(activePollingInterval);
+        html += '<div id="checkout-dynamic-status" style="margin-top: 14px;"></div>';
+
+        checkoutModalBody.innerHTML = html;
+
+        // Xử lý đổi tên file khi chọn ảnh
+        const fileInput = document.getElementById('receipt-file-input');
+        const fileLabel = document.getElementById('receipt-file-label');
+        if (fileInput && fileLabel) {
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    fileLabel.textContent = '✔ Đã chọn: ' + fileInput.files[0].name;
+                    fileLabel.style.borderColor = '#30d158';
+                    fileLabel.style.color = '#30d158';
+                }
+            });
+        }
+
+        // Xử lý nộp form biên lai
+        const formReceipt = document.getElementById('form-submit-receipt');
+        if (formReceipt) {
+            formReceipt.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const note = document.getElementById('receipt-note-input').value.trim();
+                const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+                const btnSubmit = document.getElementById('btn-send-receipt');
+
+                if (!file && !note) {
+                    alert('Vui lòng chọn ảnh chụp biên lai hoặc nhập mã giao dịch ngân hàng!');
                     return;
                 }
-                const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
-                const s = (remainingSec % 60).toString().padStart(2, '0');
-                if (timerEl) timerEl.textContent = 'Đơn hàng tự động hết hạn sau ' + m + ':' + s;
-            }, 1000);
 
-            // Start real-time status polling every 3 seconds
-            startOrderPolling(orderId, username, countdownInterval);
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = '<span>Đang gửi biên lai...</span>';
+                }
+
+                try {
+                    const formData = new FormData();
+                    if (file) formData.append('receipt_image', file);
+                    if (note) formData.append('receipt_note', note);
+
+                    const res = await fetch(resolveApiUrl('/order/' + encodeURIComponent(orderId) + '/submit-receipt'), {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const resData = await res.json();
+
+                    if (!res.ok || !resData.success) {
+                        alert(resData.message || 'Lỗi gửi biên lai');
+                        if (btnSubmit) {
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = '<span>Gửi Biên Lai Xác Nhận</span>';
+                        }
+                        return;
+                    }
+
+                    // Render màn hình CHỜ DUYỆT chuẩn xác theo yêu cầu
+                    renderAwaitingReviewState(orderId, username, resData.message);
+
+                } catch (err) {
+                    console.error('[Submit Receipt Error]', err);
+                    alert('Lỗi kết nối khi gửi biên lai');
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<span>Gửi Biên Lai Xác Nhận</span>';
+                    }
+                }
+            });
         }
     }
 
-    function startOrderPolling(orderId, username, countdownInterval) {
-        if (activePollingInterval) clearInterval(activePollingInterval);
+    // Hiển thị trạng thái CHỜ DUYỆT & bắt đầu Polling kiểm tra Admin duyệt
+    function renderAwaitingReviewState(orderId, username, messageText) {
+        checkoutModalBody.innerHTML = '<div style="text-align: center; padding: 20px 10px;">' +
+            '<div style="font-size: 2.8rem; margin-bottom: 12px;">⏳</div>' +
+            '<h4 style="color: #ff9f0a; font-size: 1.25rem; font-weight: 750; margin-bottom: 10px;">ĐANG CHỜ DUYỆT ĐƠN HÀNG</h4>' +
+            '<div style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px; text-align: left; line-height: 1.6; font-size: 0.92rem; color: #f5f5f7;">' +
+            '<p style="margin-bottom: 10px;">' + (messageText || 'Thanh toán của bạn đã được ghi nhận và đang chờ quản trị viên kiểm tra.<br>Rank Plus của bạn sẽ được xét duyệt trong vòng 24 giờ.<br>Vui lòng giữ lại biên lai thanh toán.') + '</p>' +
+            '<div style="font-size: 0.82rem; color: var(--text-tertiary);">' +
+            'Mã đơn: <code class="mono-code" style="color: #2997ff;">' + orderId + '</code> &bull; Nhân vật: <strong>' + username + '</strong>' +
+            '</div>' +
+            '</div>' +
+            '<div class="payment-status-pulsing" style="margin-bottom: 20px;">' +
+            '<span class="pulse-dot"></span>' +
+            '<span>Hệ thống đang tự động theo dõi trạng thái duyệt...</span>' +
+            '</div>' +
+            '<div style="display: flex; gap: 10px;">' +
+            '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
+            '<span>Đóng Cửa Sổ</span>' +
+            '</button>' +
+            '</div>' +
+            '</div>';
 
+        // Bắt đầu Polling định kỳ 4 giây kiểm tra xem Admin đã duyệt hay từ chối chưa
+        startOrderPolling(orderId, username);
+    }
+
+    function startOrderPolling(orderId, username) {
+        stopOrderPolling();
         activePollingInterval = setInterval(async () => {
             try {
                 const res = await fetch(resolveApiUrl('/order/status/' + encodeURIComponent(orderId)));
                 if (!res.ok) return;
                 const data = await res.json();
-
                 if (data.success && data.order) {
                     const status = data.order.status;
-                    if (status === 'PAID' || status === 'DELIVERED') {
-                        // Payment Confirmed!
-                        clearInterval(activePollingInterval);
-                        if (countdownInterval) clearInterval(countdownInterval);
-                        renderPaymentSuccess(data.order, username);
+                    if (status === 'APPROVED' || status === 'DELIVERED') {
+                        stopOrderPolling();
+                        renderOrderApproved(data.order, username);
+                    } else if (status === 'REJECTED') {
+                        stopOrderPolling();
+                        renderOrderRejected(data.order, username);
                     }
                 }
-            } catch (e) {
-                // Ignore transient network errors during polling
-            }
-        }, 3000);
+            } catch (_) {}
+        }, 4000);
     }
 
-    function renderPaymentSuccess(order, username) {
-        triggerSparkBurst(window.innerWidth / 2, window.innerHeight / 2, 60);
-        showAppleToast('✦ Kích hoạt Rank Plus thành công! ✦', 3000);
-
-        const rconDelivered = order.rcon_delivered === 1 || order.status === 'DELIVERED';
-        const rconMsg = rconDelivered
-            ? '<span style="color: #30d158;">✔ Đã tự động kích hoạt quyền lợi trực tiếp trong máy chủ Minecraft!</span>'
-            : '<span style="color: #ff9f0a;">⏳ Đơn hàng đã ghi nhận! Server sẽ tự động cấp quyền bù khi online.</span>';
+    function renderOrderApproved(order, username) {
+        triggerSparkBurst(window.innerWidth / 2, window.innerHeight / 2, 70);
+        showAppleToast('✦ Đơn hàng đã được duyệt thành công! ✦', 3500);
 
         checkoutModalBody.innerHTML = '<div class="payment-success-card">' +
             '<div class="payment-success-badge">' +
@@ -1230,15 +1733,17 @@ document.addEventListener('DOMContentLoaded', () => {
             '<polyline points="20 6 9 17 4 12"></polyline>' +
             '</svg>' +
             '</div>' +
-            '<h4>THANH TOÁN THÀNH CÔNG!</h4>' +
-            '<p>Cảm ơn bạn đã ủng hộ máy chủ 67B67T. Tài khoản <strong>' + username + '</strong> đã được nâng cấp lên <strong>Rank Plus</strong>.</p>' +
+            '<h4 style="color: #30d158; font-size: 1.4rem; font-weight: 800;">ĐƠN HÀNG ĐÃ ĐƯỢC DUYỆT!</h4>' +
+            '<p style="margin: 12px 0 18px; font-size: 0.95rem; color: #ffffff;">' +
+            'Chúc mừng! Đơn hàng của bạn đã được duyệt. Rank Plus đã được cấp cho tài khoản Minecraft của bạn.' +
+            '</p>' +
             '<div class="payment-success-details">' +
             '<div class="detail-row"><span>Mã đơn hàng:</span><strong class="mono-code">' + order.order_id + '</strong></div>' +
-            '<div class="detail-row"><span>Số tiền:</span><strong style="color: #30d158;">' + (order.amount || 50000).toLocaleString('vi-VN') + ' VNĐ</strong></div>' +
-            '<div class="detail-row"><span>Trạng thái máy chủ:</span><div>' + rconMsg + '</div></div>' +
+            '<div class="detail-row"><span>Tài khoản Minecraft:</span><strong>' + username + '</strong></div>' +
+            '<div class="detail-row"><span>Đặc quyền đã mở:</span><strong style="color: #30d158;">4 Home &amp; 5 Ender Chest</strong></div>' +
             '</div>' +
             '<div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-secondary);">' +
-            '👉 Vào máy chủ và gõ lệnh <code>/checkrank</code> hoặc <code>/ec 2</code> để trải nghiệm ngay quyền lợi mới!' +
+            '👉 Bạn có thể vào máy chủ <strong>67b67t.site</strong> và gõ lệnh <code>/checkrank</code> hoặc <code>/ec 2</code> ngay bây giờ!' +
             '</div>' +
             '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
             '<span>Hoàn Tất</span>' +
@@ -1246,7 +1751,319 @@ document.addEventListener('DOMContentLoaded', () => {
             '</div>';
     }
 
-    // Lookup Handler
+    function renderOrderRejected(order, username) {
+        checkoutModalBody.innerHTML = '<div style="text-align: center; padding: 24px 10px;">' +
+            '<div style="font-size: 3rem; margin-bottom: 12px;">❌</div>' +
+            '<h4 style="color: #ff6961; font-size: 1.3rem; font-weight: 750;">ĐƠN HÀNG BỊ TỪ CHỐI</h4>' +
+            '<p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 16px;">Đơn hàng của bạn không thể được duyệt do thông tin chưa trùng khớp.</p>' +
+            '<div style="background: rgba(255, 69, 58, 0.08); border: 1px solid rgba(255, 69, 58, 0.3); border-radius: 10px; padding: 16px; margin-bottom: 20px; text-align: left;">' +
+            '<strong style="color: #ff6961; display: block; margin-bottom: 4px;">Lý do từ chối:</strong>' +
+            '<span style="font-size: 0.88rem; color: #ffffff;">' + (order.rejection_reason || 'Chưa nhận được giao dịch hoặc thông tin biên lai không hợp lệ.') + '</span>' +
+            '</div>' +
+            '<button type="button" class="btn btn-apple-subtle btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
+            '<span>Đóng</span>' +
+            '</button>' +
+            '</div>';
+    }
+
+    // --- Admin Dashboard Controller (Dành riêng cho phuy56688@gmail.com) ---
+    const adminOrdersContainer = document.getElementById('admin-orders-container');
+    const adminStatTotal = document.getElementById('admin-stat-total');
+    const adminStatPending = document.getElementById('admin-stat-pending');
+    const adminStatApproved = document.getElementById('admin-stat-approved');
+    const adminStatRevenue = document.getElementById('admin-stat-revenue');
+    const btnAdminRefresh = document.getElementById('btn-admin-refresh');
+    const adminSearchInput = document.getElementById('admin-search-input');
+    const filterPills = document.querySelectorAll('.filter-pill');
+
+    let currentAdminFilter = 'ALL';
+
+    function openAdminDashboardModal() {
+        const user = getCurrentUser();
+        if (!user || user.role !== 'ADMIN') {
+            alert('Quyền hạn bị từ chối! Bạn không phải là quản trị viên hệ thống.');
+            return;
+        }
+        openModal(adminModal);
+        loadAdminDashboardData();
+    }
+
+    async function loadAdminDashboardData() {
+        const token = getAuthToken();
+        if (!token) return;
+
+        try {
+            // 1. Tải số liệu thống kê Dashboard
+            const resStats = await fetch(resolveApiUrl('/admin/dashboard'), {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const dataStats = await resStats.json();
+            if (resStats.ok && dataStats.success && dataStats.stats) {
+                const s = dataStats.stats;
+                if (adminStatTotal) adminStatTotal.textContent = s.totalOrders || 0;
+                if (adminStatPending) adminStatPending.textContent = s.pendingReview || 0;
+                if (adminStatApproved) adminStatApproved.textContent = s.approvedOrders || 0;
+                if (adminStatRevenue) adminStatRevenue.textContent = (s.totalRevenue || 0).toLocaleString('vi-VN') + ' đ';
+            }
+
+            // 2. Tải danh sách đơn hàng
+            loadAdminOrdersList();
+
+        } catch (err) {
+            console.error('[Load Admin Dashboard Error]', err);
+        }
+    }
+
+    async function loadAdminOrdersList() {
+        if (!adminOrdersContainer) return;
+        const token = getAuthToken();
+        if (!token) return;
+
+        const q = adminSearchInput ? adminSearchInput.value.trim() : '';
+        const url = resolveApiUrl('/admin/orders?status=' + encodeURIComponent(currentAdminFilter) + '&q=' + encodeURIComponent(q));
+
+        adminOrdersContainer.innerHTML = '<div class="text-center" style="padding: 30px;"><div class="pulse-dot" style="margin: 0 auto 12px;"></div><p style="color: var(--text-secondary); font-size: 0.85rem;">Đang tải danh sách đơn...</p></div>';
+
+        try {
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success || !data.orders || data.orders.length === 0) {
+                adminOrdersContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-tertiary);"><p>Không có đơn hàng nào phù hợp với bộ lọc hiện tại.</p></div>';
+                return;
+            }
+
+            let html = '';
+            data.orders.forEach(ord => {
+                let badgeClass = 'badge-pending';
+                let badgeText = 'Chờ thanh toán';
+
+                if (ord.status === 'AWAITING_REVIEW') {
+                    badgeClass = 'badge-awaiting';
+                    badgeText = '⚡ Chờ Admin Duyệt';
+                } else if (ord.status === 'APPROVED' || ord.status === 'DELIVERED') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '✔ Đã Duyệt (Cấp Rank)';
+                } else if (ord.status === 'APPROVED_PENDING_DELIVERY') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '⏳ Đã Duyệt (Chờ Server Online)';
+                } else if (ord.status === 'REJECTED') {
+                    badgeClass = 'badge-rejected';
+                    badgeText = '✖ Đã Từ Chối';
+                }
+
+                const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : '';
+                const buyerEmail = ord.buyer_email || 'Khách vãng lai';
+
+                let receiptSection = '<span style="color: var(--text-tertiary);">Chưa nộp biên lai</span>';
+                if (ord.receipt_url || ord.receipt_note) {
+                    receiptSection = '<div class="admin-receipt-preview">';
+                    if (ord.receipt_url) {
+                        receiptSection += '<a href="' + ord.receipt_url + '" target="_blank" class="admin-receipt-link">📷 Xem ảnh biên lai đính kèm</a><br>';
+                    }
+                    if (ord.receipt_note) {
+                        receiptSection += '<span style="font-size: 0.8rem; color: #dfdfe2;">Ghi chú: ' + ord.receipt_note + '</span>';
+                    }
+                    receiptSection += '</div>';
+                }
+
+                const isApproved = ord.status === 'APPROVED' || ord.status === 'DELIVERED' || ord.status === 'APPROVED_PENDING_DELIVERY';
+
+                let actionBtns = '';
+                if (!isApproved) {
+                    actionBtns += '<button type="button" class="btn-admin-approve" onclick="adminApproveOrder(\'' + ord.order_id + '\')">✔ Duyệt Đơn &amp; Cấp Rank</button>';
+                    actionBtns += '<button type="button" class="btn-admin-reject" onclick="adminRejectOrder(\'' + ord.order_id + '\')">✖ Từ Chối</button>';
+                } else {
+                    actionBtns += '<span style="color: #30d158; font-size: 0.82rem; font-weight: 600;">✔ Đã duyệt bởi ' + (ord.reviewed_by || 'Admin') + '</span>';
+                }
+
+                html += '<div class="admin-order-card">' +
+                    '<div class="admin-order-header">' +
+                    '<div class="admin-order-user-info">' +
+                    '<img src="https://mc-heads.net/avatar/' + encodeURIComponent(ord.username) + '/44" alt="' + ord.username + '" class="admin-mc-avatar" onerror="this.src=\'https://mc-heads.net/avatar/MHF_Steve/44\'">' +
+                    '<div class="admin-mc-meta">' +
+                    '<strong>' + ord.username + '</strong>' +
+                    '<span>' + buyerEmail + ' &bull; ' + createdDate + '</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div>' +
+                    '<span class="admin-order-id-badge">#' + ord.order_id + '</span> ' +
+                    '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="admin-order-body">' +
+                    '<div>' +
+                    '<strong style="display: block; font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 4px;">Chứng từ thanh toán:</strong>' +
+                    receiptSection +
+                    '</div>' +
+                    '<div style="text-align: right;">' +
+                    '<strong style="display: block; font-size: 1.15rem; color: #30d158;">' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ</strong>' +
+                    '<span style="font-size: 0.78rem; color: var(--text-tertiary);">Gói Rank Plus</span>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="admin-order-actions">' +
+                    actionBtns +
+                    '</div>' +
+                    '</div>';
+            });
+
+            adminOrdersContainer.innerHTML = html;
+
+        } catch (err) {
+            console.error('[Load Admin Orders Error]', err);
+            adminOrdersContainer.innerHTML = '<p class="text-center" style="color: #ff6961;">Lỗi tải dữ liệu đơn hàng.</p>';
+        }
+    }
+
+    // Các hàm duyệt & từ chối đơn hàng toàn cục cho Admin
+    window.adminApproveOrder = async function(orderId) {
+        if (!confirm('Xác nhận DUYỆT đơn hàng #' + orderId + ' và gửi lệnh cấp Rank Plus ngay lập tức vào máy chủ Minecraft?')) {
+            return;
+        }
+        const token = getAuthToken();
+        if (!token) return;
+
+        try {
+            const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || 'Lỗi duyệt đơn hàng');
+                return;
+            }
+            alert(data.message);
+            loadAdminDashboardData();
+        } catch (err) {
+            alert('Lỗi kết nối khi duyệt đơn');
+        }
+    };
+
+    window.adminRejectOrder = async function(orderId) {
+        const reason = prompt('Nhập lý do từ chối đơn hàng #' + orderId + ':', 'Biên lai không hợp lệ hoặc chưa nhận được tiền trong tài khoản.');
+        if (reason === null) return;
+
+        const token = getAuthToken();
+        if (!token) return;
+
+        try {
+            const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/reject'), {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert(data.message || 'Lỗi từ chối đơn hàng');
+                return;
+            }
+            alert('Đã từ chối đơn hàng #' + orderId);
+            loadAdminDashboardData();
+        } catch (err) {
+            alert('Lỗi kết nối khi từ chối đơn');
+        }
+    };
+
+    // Filter pills click
+    filterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            filterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentAdminFilter = pill.getAttribute('data-status') || 'ALL';
+            loadAdminOrdersList();
+        });
+    });
+
+    if (btnAdminRefresh) btnAdminRefresh.addEventListener('click', loadAdminDashboardData);
+    if (adminSearchInput) {
+        adminSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadAdminOrdersList();
+            }
+        });
+    }
+
+    // --- My Orders Modal Controller (Lịch Sử Đơn Hàng Của Tôi) ---
+    async function openMyOrdersModal() {
+        const token = getAuthToken();
+        if (!token) {
+            openModal(authModal);
+            return;
+        }
+
+        openModal(myOrdersModal);
+        if (!myOrdersContent) return;
+
+        myOrdersContent.innerHTML = '<div style="text-align: center; padding: 30px;"><div class="pulse-dot" style="margin: 0 auto 12px;"></div><p style="color: var(--text-secondary); font-size: 0.85rem;">Đang tải danh sách đơn của bạn...</p></div>';
+
+        try {
+            const res = await fetch(resolveApiUrl('/order/my-orders'), {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success || !data.orders || data.orders.length === 0) {
+                myOrdersContent.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-tertiary);"><p>Bạn chưa có đơn hàng nào.</p><a href="#store" onclick="document.getElementById(\'my-orders-close\').click();" class="btn btn-apple-primary" style="margin-top: 14px; display: inline-block;"><span>Đến Cửa Hàng Mua Rank Plus</span></a></div>';
+                return;
+            }
+
+            let html = '';
+            data.orders.forEach(ord => {
+                let badgeClass = 'badge-pending';
+                let badgeText = 'Chờ thanh toán';
+                let statusNotice = 'Đang chờ bạn chuyển khoản 5.000đ và gửi biên lai.';
+
+                if (ord.status === 'AWAITING_REVIEW') {
+                    badgeClass = 'badge-awaiting';
+                    badgeText = '⚡ Đang Chờ Admin Duyệt';
+                    statusNotice = 'Thanh toán của bạn đã được ghi nhận và đang chờ quản trị viên kiểm tra.<br>Rank Plus của bạn sẽ được xét duyệt trong vòng 24 giờ. Vui lòng giữ lại biên lai thanh toán.';
+                } else if (ord.status === 'APPROVED' || ord.status === 'DELIVERED') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '✔ Đã Duyệt (Cấp Rank)';
+                    statusNotice = 'Chúc mừng! Đơn hàng của bạn đã được duyệt. Rank Plus đã được cấp cho tài khoản Minecraft của bạn.';
+                } else if (ord.status === 'APPROVED_PENDING_DELIVERY') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '⏳ Đã Duyệt (Chờ Server Online)';
+                    statusNotice = 'Đơn hàng của bạn đã được duyệt! Server Minecraft đang khởi động lại và sẽ tự động cấp rank ngay khi online.';
+                } else if (ord.status === 'REJECTED') {
+                    badgeClass = 'badge-rejected';
+                    badgeText = '✖ Bị Từ Chối';
+                    statusNotice = 'Đơn hàng đã bị từ chối. Lý do: ' + (ord.rejection_reason || 'Thông tin thanh toán không hợp lệ.');
+                }
+
+                const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : '';
+
+                html += '<div class="lookup-order-card" style="margin-bottom: 14px;">' +
+                    '<div class="lookup-order-top">' +
+                    '<span class="lookup-order-id">#' + ord.order_id + '</span>' +
+                    '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
+                    '</div>' +
+                    '<div class="lookup-order-bottom" style="margin-bottom: 10px;">' +
+                    '<span>Nhân vật: <strong>' + ord.username + '</strong></span>' +
+                    '<span style="color: #30d158; font-weight: 700;">' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
+                    '</div>' +
+                    '<div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; font-size: 0.82rem; color: #dfdfe2; line-height: 1.45;">' +
+                    statusNotice +
+                    '</div>' +
+                    '</div>';
+            });
+
+            myOrdersContent.innerHTML = html;
+
+        } catch (err) {
+            console.error('[My Orders Error]', err);
+            myOrdersContent.innerHTML = '<p class="text-center" style="color: #ff6961;">Lỗi tải lịch sử đơn hàng.</p>';
+        }
+    }
+
+    // --- Tra Cứu Công Khai (Lookup Handler) ---
     async function doLookup() {
         if (!lookupInput || !lookupResults) return;
         const query = lookupInput.value.trim();
@@ -1276,27 +2093,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 let badgeClass = 'badge-pending';
                 let badgeText = 'Chờ thanh toán';
 
-                if (ord.status === 'DELIVERED') {
-                    badgeClass = 'badge-delivered';
-                    badgeText = 'Đã cấp Rank Plus';
-                } else if (ord.status === 'PAID') {
-                    badgeClass = 'badge-paid';
-                    badgeText = 'Đã thanh toán';
-                } else if (ord.status === 'FAILED') {
-                    badgeClass = 'badge-failed';
-                    badgeText = 'Thất bại';
+                if (ord.status === 'AWAITING_REVIEW') {
+                    badgeClass = 'badge-awaiting';
+                    badgeText = '⚡ Chờ Duyệt';
+                } else if (ord.status === 'APPROVED' || ord.status === 'DELIVERED') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '✔ Đã Cấp Rank Plus';
+                } else if (ord.status === 'APPROVED_PENDING_DELIVERY') {
+                    badgeClass = 'badge-approved';
+                    badgeText = '⏳ Đã Duyệt (Chờ Server Online)';
+                } else if (ord.status === 'REJECTED') {
+                    badgeClass = 'badge-rejected';
+                    badgeText = '✖ Thất Bại / Từ Chối';
                 }
 
                 const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : 'Mới tạo';
 
                 html += '<div class="lookup-order-card">' +
                     '<div class="lookup-order-top">' +
-                    '<span class="lookup-order-id">' + ord.order_id + '</span>' +
+                    '<span class="lookup-order-id">#' + ord.order_id + '</span>' +
                     '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
                     '</div>' +
                     '<div class="lookup-order-bottom">' +
                     '<span>Tài khoản: <strong>' + ord.username + '</strong></span>' +
-                    '<span>' + (ord.amount || 50000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
+                    '<span>' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
                     '</div>' +
                     '</div>';
             });
@@ -1319,4 +2139,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (btnOpenLookup) btnOpenLookup.addEventListener('click', () => openModal(lookupModal));
 });

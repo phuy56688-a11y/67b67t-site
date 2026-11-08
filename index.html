@@ -18,6 +18,8 @@
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
     <link rel="stylesheet" href="styles.css?v=apple-4.3">
+    <!-- Google Identity Services (Google OAuth 2.0) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -74,6 +76,44 @@
             </nav>
 
             <div class="header-actions">
+                <!-- User Account & Auth Widget -->
+                <div class="user-auth-widget" id="user-auth-widget">
+                    <button type="button" class="btn btn-pill-nav btn-auth-trigger" id="btn-open-auth" aria-label="Tài khoản">
+                        <img src="https://mc-heads.net/avatar/MHF_Steve/20" alt="Avatar" id="nav-user-avatar" class="nav-user-avatar" style="display: none;">
+                        <svg class="auth-icon-svg" id="nav-auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span id="nav-auth-label">Đăng Nhập</span>
+                        <span class="badge-admin-crown" id="nav-admin-crown" style="display: none;" title="Quản Trị Viên">👑</span>
+                    </button>
+                    <!-- User Dropdown Menu -->
+                    <div class="user-dropdown-menu" id="user-dropdown-menu" aria-hidden="true">
+                        <div class="user-dropdown-header">
+                            <img src="https://mc-heads.net/avatar/MHF_Steve/38" alt="Avatar" id="dropdown-user-avatar" class="dropdown-avatar">
+                            <div class="dropdown-user-info">
+                                <strong id="dropdown-user-name">Người chơi</strong>
+                                <span id="dropdown-user-email">email@example.com</span>
+                                <span id="dropdown-user-role" class="badge-role">USER</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <button type="button" class="dropdown-item" id="btn-dropdown-admin" style="display: none;">
+                            <span class="dropdown-item-icon">👑</span>
+                            <span>Trang Quản Trị (Admin)</span>
+                        </button>
+                        <button type="button" class="dropdown-item" id="btn-dropdown-my-orders">
+                            <span class="dropdown-item-icon">📦</span>
+                            <span>Đơn Hàng Của Tôi</span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button type="button" class="dropdown-item text-danger" id="btn-dropdown-logout">
+                            <span class="dropdown-item-icon">🚪</span>
+                            <span>Đăng Xuất</span>
+                        </button>
+                    </div>
+                </div>
+
                 <button type="button" class="btn btn-pill-nav copy-ip-btn" data-ip="67b67t.site" aria-label="Sao chép địa chỉ máy chủ">
                     <span class="status-pip" aria-hidden="true"></span>
                     <span class="nav-ip-text">67b67t.site</span>
@@ -318,7 +358,8 @@
                             <span class="store-badge-hot">
                                 <span class="pulse-dot"></span> ĐẶC QUYỀN CAO CẤP
                             </span>
-                            <span class="store-badge-instant">⚡ Kích hoạt tự động</span>
+                            <span class="store-badge-discount">🔥 SIÊU ƯU ĐÃI GIẢM 90%</span>
+                            <span class="store-badge-instant">⚡ Duyệt đơn &amp; kích hoạt an toàn</span>
                         </div>
 
                         <div class="store-card-header">
@@ -327,7 +368,11 @@
                                 <p class="rank-tagline">Mở rộng không gian lưu trữ &amp; tính cơ động vượt bậc</p>
                             </div>
                             <div class="rank-price-box">
-                                <div class="price-value"><span class="currency">VNĐ</span> 50.000</div>
+                                <div class="price-old-row">
+                                    <span class="price-strikethrough">50.000 đ</span>
+                                    <span class="badge-tag-discount">-90%</span>
+                                </div>
+                                <div class="price-value"><span class="currency">VNĐ</span> 5.000</div>
                                 <span class="price-type">Kích hoạt vĩnh viễn &bull; 1 lần duy nhất</span>
                             </div>
                         </div>
@@ -391,10 +436,11 @@
 
                             <div class="store-action-buttons">
                                 <button type="button" class="btn btn-apple-primary btn-store-buy" id="btn-open-checkout">
-                                    <svg class="zalopay-icon-svg" viewBox="0 0 32 32" fill="currentColor">
-                                        <path d="M4 8a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8zm7.5 4.5v1.8h4.8L11.5 20v1.8h9v-1.8h-4.8l4.8-5.7v-1.8h-9z"/>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg">
+                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                        <line x1="2" y1="10" x2="22" y2="10"></line>
                                     </svg>
-                                    <span>Mua Bằng ZaloPay (50.000 đ)</span>
+                                    <span>Mua Rank Plus (5.000 đ)</span>
                                 </button>
                                 <button type="button" class="btn btn-apple-subtle" id="btn-open-lookup">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg">
@@ -680,6 +726,190 @@
                 </div>
                 <div class="lookup-results" id="lookup-results">
                     <p class="lookup-placeholder">Nhập tên nhân vật hoặc mã đơn để tra cứu thông tin thanh toán và trạng thái cấp rank.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. Authentication Modal (Đăng Nhập / Đăng Ký / Google OAuth / Quên Mật Khẩu) -->
+    <div class="modal" id="auth-modal" aria-hidden="true" role="dialog" aria-labelledby="auth-modal-title">
+        <div class="modal-overlay" id="auth-modal-overlay"></div>
+        <div class="modal-sheet modal-sheet-auth">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="badge-modal-top">THÀNH VIÊN 67B67T</span>
+                    <h3 id="auth-modal-title">Tài Khoản Người Dùng</h3>
+                </div>
+                <button type="button" class="modal-close" id="auth-modal-close" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body auth-modal-body">
+                <!-- Auth Tabs Navigation -->
+                <div class="auth-tabs-nav">
+                    <button type="button" class="auth-tab-btn active" id="tab-btn-login">Đăng Nhập</button>
+                    <button type="button" class="auth-tab-btn" id="tab-btn-register">Đăng Ký</button>
+                    <button type="button" class="auth-tab-btn" id="tab-btn-forgot">Quên Mật Khẩu</button>
+                </div>
+
+                <!-- Google OAuth Quick Button -->
+                <div class="google-auth-box">
+                    <div id="g_id_onload"
+                         data-client_id=""
+                         data-callback="handleGoogleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <button type="button" class="btn-google-apple" id="btn-google-login">
+                        <svg class="google-icon" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Đăng nhập bằng Google</span>
+                    </button>
+                    <span class="auth-hint-small">Quản trị viên (<code>phuy56688@gmail.com</code>) đăng nhập Google để mở trang Admin.</span>
+                </div>
+
+                <div class="auth-divider"><span>HOẶC BẰNG EMAIL</span></div>
+
+                <!-- Form 1: Đăng Nhập -->
+                <form id="form-login" class="auth-form-panel active">
+                    <div class="auth-field">
+                        <label for="login-email">Địa chỉ Email:</label>
+                        <input type="email" id="login-email" class="store-input" placeholder="email@example.com" required autocomplete="email">
+                    </div>
+                    <div class="auth-field">
+                        <label for="login-password">Mật khẩu:</label>
+                        <input type="password" id="login-password" class="store-input" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-apple-primary btn-block" id="btn-submit-login">
+                        <span>Đăng Nhập</span>
+                    </button>
+                </form>
+
+                <!-- Form 2: Đăng Ký -->
+                <form id="form-register" class="auth-form-panel">
+                    <div class="auth-field">
+                        <label for="reg-name">Tên hiển thị:</label>
+                        <input type="text" id="reg-name" class="store-input" placeholder="Ví dụ: Huy Pham, Steve..." autocomplete="name">
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-email">Địa chỉ Email:</label>
+                        <input type="email" id="reg-email" class="store-input" placeholder="email@example.com" required autocomplete="email">
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-password">Mật khẩu (tối thiểu 6 ký tự):</label>
+                        <input type="password" id="reg-password" class="store-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-apple-primary btn-block" id="btn-submit-register">
+                        <span>Tạo Tài Khoản Mới</span>
+                    </button>
+                </form>
+
+                <!-- Form 3: Quên Mật Khẩu -->
+                <form id="form-forgot" class="auth-form-panel">
+                    <div id="forgot-step-1">
+                        <div class="auth-field">
+                            <label for="forgot-email">Email tài khoản cần khôi phục:</label>
+                            <input type="email" id="forgot-email" class="store-input" placeholder="email@example.com" required>
+                        </div>
+                        <button type="button" class="btn btn-apple-primary btn-block" id="btn-send-reset-code">
+                            <span>Gửi Mã Khôi Phục</span>
+                        </button>
+                    </div>
+
+                    <div id="forgot-step-2" style="display: none; margin-top: 14px;">
+                        <div class="auth-field">
+                            <label for="reset-code">Mã xác nhận 6 số:</label>
+                            <input type="text" id="reset-code" class="store-input" placeholder="123456" maxlength="6">
+                        </div>
+                        <div class="auth-field">
+                            <label for="reset-new-password">Mật khẩu mới (tối thiểu 6 ký tự):</label>
+                            <input type="password" id="reset-new-password" class="store-input" placeholder="••••••••" minlength="6">
+                        </div>
+                        <button type="button" class="btn btn-apple-primary btn-block" id="btn-submit-new-password">
+                            <span>Lưu Mật Khẩu Mới</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="auth-alert-box" class="auth-alert" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Admin Dashboard Modal (Dành riêng cho phuy56688@gmail.com) -->
+    <div class="modal" id="admin-modal" aria-hidden="true" role="dialog" aria-labelledby="admin-modal-title">
+        <div class="modal-overlay" id="admin-modal-overlay"></div>
+        <div class="modal-sheet modal-sheet-admin">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="badge-modal-top">QUẢN TRỊ VIÊN 67B67T</span>
+                    <h3 id="admin-modal-title">👑 Bảng Điều Khiển &amp; Duyệt Đơn Rank Plus</h3>
+                    <span class="admin-logged-email" id="admin-current-email">phuy56688@gmail.com</span>
+                </div>
+                <button type="button" class="modal-close" id="admin-modal-close" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body admin-modal-body">
+                <!-- Stat Cards Grid -->
+                <div class="admin-stats-grid">
+                    <div class="admin-stat-card">
+                        <span class="stat-label">Tổng Đơn Hàng</span>
+                        <strong class="stat-number" id="admin-stat-total">0</strong>
+                    </div>
+                    <div class="admin-stat-card stat-pending">
+                        <span class="stat-label">Chờ Duyệt (Awaiting)</span>
+                        <strong class="stat-number" id="admin-stat-pending">0</strong>
+                    </div>
+                    <div class="admin-stat-card stat-approved">
+                        <span class="stat-label">Đã Duyệt (Cấp Rank)</span>
+                        <strong class="stat-number" id="admin-stat-approved">0</strong>
+                    </div>
+                    <div class="admin-stat-card stat-revenue">
+                        <span class="stat-label">Doanh Thu Thực Tế</span>
+                        <strong class="stat-number" id="admin-stat-revenue">0 đ</strong>
+                    </div>
+                </div>
+
+                <!-- Admin Action & Filter Toolbar -->
+                <div class="admin-toolbar">
+                    <div class="admin-filter-pills">
+                        <button type="button" class="filter-pill active" data-status="ALL">Tất Cả</button>
+                        <button type="button" class="filter-pill" data-status="AWAITING_REVIEW">⚡ Chờ Duyệt</button>
+                        <button type="button" class="filter-pill" data-status="APPROVED">✔ Đã Duyệt</button>
+                        <button type="button" class="filter-pill" data-status="REJECTED">✖ Từ Chối</button>
+                    </div>
+                    <div class="admin-search-box">
+                        <input type="text" id="admin-search-input" class="store-input" placeholder="Tìm theo tên Minecraft, email, mã đơn...">
+                        <button type="button" class="btn btn-apple-subtle" id="btn-admin-refresh">🔄 Làm Mới</button>
+                    </div>
+                </div>
+
+                <!-- Orders Table Container -->
+                <div class="admin-orders-table-wrap" id="admin-orders-container">
+                    <div class="text-center" style="padding: 40px;">
+                        <div class="pulse-dot" style="margin: 0 auto 12px;"></div>
+                        <p style="color: var(--text-secondary);">Đang tải dữ liệu đơn hàng...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. My Orders Modal (Đơn Hàng Của Tôi) -->
+    <div class="modal" id="my-orders-modal" aria-hidden="true" role="dialog" aria-labelledby="my-orders-title">
+        <div class="modal-overlay" id="my-orders-overlay"></div>
+        <div class="modal-sheet modal-sheet-my-orders">
+            <div class="modal-header">
+                <div class="modal-header-text">
+                    <span class="badge-modal-top">LỊCH SỬ GIAO DỊCH</span>
+                    <h3 id="my-orders-title">📦 Đơn Hàng Của Tôi</h3>
+                </div>
+                <button type="button" class="modal-close" id="my-orders-close" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body my-orders-body" id="my-orders-content">
+                <div class="text-center" style="padding: 30px;">
+                    <div class="pulse-dot" style="margin: 0 auto 12px;"></div>
+                    <p style="color: var(--text-secondary);">Đang tải danh sách đơn hàng của bạn...</p>
                 </div>
             </div>
         </div>

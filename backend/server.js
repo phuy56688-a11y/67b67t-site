@@ -5,11 +5,14 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const rateLimit = require('express-rate-limit');
 const config = require('./config/config');
 const db = require('./database/db');
 const minecraft = require('./services/minecraft');
 
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payment');
 const orderRoutes = require('./routes/order');
 
@@ -90,7 +93,12 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Serve static uploaded receipts
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Mount Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/order', orderRoutes);
 

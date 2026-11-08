@@ -106,7 +106,10 @@ async function grantRankPlus(username, orderId) {
 async function processPendingDeliveries() {
   try {
     const pendingOrders = await db.all(
-      `SELECT * FROM orders WHERE status = 'DELIVERY_PENDING' AND rcon_attempts < 10 ORDER BY id ASC LIMIT 5`
+      `SELECT * FROM orders 
+       WHERE status IN ('DELIVERY_PENDING', 'APPROVED_PENDING_DELIVERY') 
+         AND rcon_attempts < 15 
+       ORDER BY id ASC LIMIT 5`
     );
 
     if (pendingOrders.length === 0) return;
@@ -117,14 +120,15 @@ async function processPendingDeliveries() {
       const result = await grantRankPlus(order.username, order.order_id);
 
       if (result.success) {
+        const finalStatus = order.status === 'APPROVED_PENDING_DELIVERY' ? 'APPROVED' : 'DELIVERED';
         await db.run(
           `UPDATE orders 
-           SET status = 'DELIVERED', 
+           SET status = ?, 
                rcon_attempts = rcon_attempts + 1, 
                rcon_delivered_at = datetime('now', 'localtime'),
                updated_at = datetime('now', 'localtime')
            WHERE id = ?`,
-          [order.id]
+          [finalStatus, order.id]
         );
         console.log(`✅ [Retry Worker] Đã cấp bù Rank Plus thành công cho "${order.username}" (Đơn #${order.order_id})`);
       } else {

@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const config = require('../config/config');
 const orderService = require('../services/orderService');
+const { optionalAuth } = require('../middleware/auth');
 
 /**
  * GET /api/payment/config-status
@@ -20,21 +21,28 @@ router.get('/config-status', (req, res) => {
     env: config.zalopay.env,
     rank: {
       name: config.rank.name,
-      price: config.rank.price,
+      price: config.rank.price,          // 5.000 VNĐ
+      old_price: config.rank.oldPrice,   // 50.000 VNĐ
+      discount_percent: 90,
       currency: config.rank.currency
+    },
+    manual_payment: {
+      bank_name: config.manualPayment.bankName,
+      account_no: config.manualPayment.accountNo,
+      account_name: config.manualPayment.accountName
     },
     message: isConfigured
       ? 'Cổng thanh toán ZaloPay Merchant đã sẵn sàng nhận giao dịch.'
-      : 'Hệ thống đang chờ quản trị viên cấu hình App ID, Key 1 và Key 2 trong file .env'
+      : 'Hệ thống đang sử dụng quy trình chuyển khoản và duyệt đơn thủ công trong khi chờ ZaloPay Merchant.'
   });
 });
 
 /**
  * POST /api/payment/create
- * Initiate a new Rank Plus order with ZaloPay
+ * Initiate a new Rank Plus order
  * Body: { username: string }
  */
-router.post('/create', async (req, res) => {
+router.post('/create', optionalAuth, async (req, res) => {
   try {
     const { username } = req.body;
 
@@ -45,18 +53,24 @@ router.post('/create', async (req, res) => {
       });
     }
 
-    const orderData = await orderService.createOrder(username);
+    const userId = req.user ? req.user.id : null;
+    const buyerEmail = req.user ? req.user.email : null;
+
+    const orderData = await orderService.createOrder(username, userId, buyerEmail);
 
     res.json({
       success: true,
       configured: orderData.configured !== false,
       order_id: orderData.orderId,
       username: orderData.username,
-      amount: orderData.amount,
+      amount: orderData.amount,             // 5000 VNĐ
+      old_amount: orderData.oldAmount,      // 50000 VNĐ
+      discount_percent: orderData.discountPercent || 90,
+      manual_payment: orderData.manualPayment || null,
       status: orderData.status,
       order_url: orderData.orderUrl,
       zp_trans_token: orderData.zpTransToken,
-      qr_code: orderData.qrCode,
+      qr_code: orderData.qrCode || (orderData.manualPayment ? orderData.manualPayment.qrUrl : null),
       message: orderData.message
     });
   } catch (err) {

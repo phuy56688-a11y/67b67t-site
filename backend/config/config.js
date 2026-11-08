@@ -1,6 +1,6 @@
 /**
  * 67B67T — Application Configuration Loader
- * Handles environment variables, validation, and merchant status detection
+ * Handles environment variables, authentication, admin roles, and payment settings
  */
 
 const path = require('path');
@@ -10,6 +10,26 @@ const config = {
   port: parseInt(process.env.PORT, 10) || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
   frontendUrl: process.env.FRONTEND_URL || 'https://67b67t.site',
+
+  // Email quản trị viên duy nhất được cấp quyền ADMIN tự động
+  adminEmail: (process.env.ADMIN_EMAIL || 'phuy56688@gmail.com').toLowerCase().trim(),
+
+  // JWT Secret cho phiên đăng nhập người dùng & quản trị
+  jwtSecret: process.env.JWT_SECRET || '67b67t_titanium_jwt_auth_secret_key_2026',
+
+  // Google OAuth 2.0 Credentials
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : ''
+  },
+
+  // Cấu hình thanh toán thủ công (Chuyển khoản / Quét QR)
+  manualPayment: {
+    bankName: process.env.MANUAL_PAY_BANK || 'MB Bank (Quân Đội)',
+    accountNo: process.env.MANUAL_PAY_ACCOUNT || '0367676767',
+    accountName: process.env.MANUAL_PAY_NAME || 'PHAM HUY',
+    qrTemplate: process.env.MANUAL_PAY_QR_TEMPLATE || 'https://api.vietqr.io/image/970422-0367676767-print.jpg?amount=5000&addInfo=67B67T%20{orderId}&accountName=PHAM%20HUY'
+  },
 
   zalopay: {
     env: process.env.ZALOPAY_ENV === 'production' ? 'production' : 'sandbox',
@@ -29,7 +49,9 @@ const config = {
 
   rank: {
     name: process.env.RANK_PLUS_NAME || 'Rank Plus (4 Home + 5 Ender Chest)',
-    price: parseInt(process.env.RANK_PLUS_PRICE, 10) || 50000,
+    // Giá mới: 5.000 VNĐ | Giá cũ: 50.000 VNĐ (Giảm giá 90%)
+    price: parseInt(process.env.RANK_PLUS_PRICE, 10) || 5000,
+    oldPrice: 50000,
     currency: 'VND'
   },
 
@@ -47,7 +69,7 @@ const config = {
 };
 
 /**
- * Check if ZaloPay Merchant credentials have been properly configured
+ * Kiểm tra xem ZaloPay Merchant credentials đã được cấu hình hay chưa
  * @returns {boolean}
  */
 config.isZaloPayConfigured = function () {

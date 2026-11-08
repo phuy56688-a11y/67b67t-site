@@ -9,11 +9,13 @@ const zalopay = require('./zalopay');
 const minecraft = require('./minecraft');
 
 /**
- * Create a new pending order and initialize ZaloPay payment session
+ * Create a new pending order and initialize payment session
  * @param {string} username - Minecraft player username
+ * @param {number|null} userId - ID tài khoản người dùng
+ * @param {string|null} buyerEmail - Email người mua
  * @returns {Promise<Object>}
  */
-async function createOrder(username) {
+async function createOrder(username, userId = null, buyerEmail = null) {
   const cleanUsername = (username || '').trim();
 
   if (!minecraft.isValidUsername(cleanUsername)) {
@@ -21,30 +23,41 @@ async function createOrder(username) {
   }
 
   const orderId = zalopay.generateAppTransId();
+  // GIÁ MỚI 5.000 VNĐ - ĐƯỢC ÉP BUỘC CHẶT CHẼ TỪ BACKEND
   const amount = config.rank.price;
 
-  // 1. Record pending order in database
+  const manualQrUrl = config.manualPayment.qrTemplate.replace('{orderId}', orderId);
+
+  // 1. Ghi nhận đơn hàng vào cơ sở dữ liệu
   await db.run(
-    `INSERT INTO orders (order_id, username, rank_name, amount, status)
-     VALUES (?, ?, 'plus', ?, 'PENDING')`,
-    [orderId, cleanUsername, amount]
+    `INSERT INTO orders (order_id, user_id, buyer_email, username, rank_name, amount, status, qr_code)
+     VALUES (?, ?, ?, ?, 'plus', ?, 'PENDING', ?)`,
+    [orderId, userId, buyerEmail, cleanUsername, amount, manualQrUrl]
   );
 
   await db.run(
     `INSERT INTO order_logs (order_id, action, details) VALUES (?, 'CREATED', ?)`,
-    [orderId, `Tạo đơn hàng mua Rank Plus cho ${cleanUsername} với số tiền ${amount} VNĐ`]
+    [orderId, `Tạo đơn hàng mua Rank Plus cho ${cleanUsername} với giá ưu đãi ${amount} VNĐ`]
   );
 
-  // Check if ZaloPay credentials are configured.
-  // If not configured, gracefully return order details with configured: false
+  // Nếu ZaloPay Merchant chưa cấu hình: Sử dụng quy trình thanh toán thủ công & duyệt đơn
   if (!config.isZaloPayConfigured()) {
     return {
       orderId,
       username: cleanUsername,
       amount,
+      oldAmount: config.rank.oldPrice || 50000,
+      discountPercent: 90,
       configured: false,
+      manualPayment: {
+        bankName: config.manualPayment.bankName,
+        accountNo: config.manualPayment.accountNo,
+        accountName: config.manualPayment.accountName,
+        transferContent: `67B67T ${orderId}`,
+        qrUrl: manualQrUrl
+      },
       status: 'PENDING',
-      message: 'Hệ thống đang chờ cấu hình ZaloPay Merchant credentials.'
+      message: 'Vui lòng quét mã QR chuyển khoản 5.000đ và gửi biên lai để quản trị viên kiểm tra.'
     };
   }
 

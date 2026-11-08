@@ -247,6 +247,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnOkModal) btnOkModal.addEventListener('click', closeRules);
     if (modalOverlay) modalOverlay.addEventListener('click', closeRules);
 
+    const faqOpenRules = document.getElementById('faq-open-rules');
+    if (faqOpenRules) {
+        faqOpenRules.addEventListener('click', (e) => {
+            e.preventDefault();
+            openRules();
+        });
+    }
+
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && rulesModal.classList.contains('active')) {
             closeRules();
@@ -688,10 +696,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Expand aura on interactive elements
-        const interactiveTargets = document.querySelectorAll('a, button, .tilt-card, .spec-item, .logo');
+        const interactiveTargets = document.querySelectorAll('a, button, .tilt-card, .spec-item, .logo, .faq-summary');
         interactiveTargets.forEach(el => {
             el.addEventListener('mouseenter', () => cursorGlow.classList.add('hovering'));
             el.addEventListener('mouseleave', () => cursorGlow.classList.remove('hovering'));
+        });
+    }
+
+    /* --------------------------------------------------------------------------
+       12. Modern FAQ Accordion Interactive Enhancement
+       -------------------------------------------------------------------------- */
+    const faqSummaries = document.querySelectorAll('.faq-summary');
+    faqSummaries.forEach(summary => {
+        summary.addEventListener('click', (e) => {
+            triggerSparkBurst(e.clientX, e.clientY, 12);
+        });
+    });
+
+    // Fallback for older browsers not supporting native exclusive details[name]
+    if (!('name' in HTMLDetailsElement.prototype)) {
+        const faqItems = document.querySelectorAll('.faq-item[name="faq-accordion"]');
+        faqItems.forEach(item => {
+            item.addEventListener('toggle', () => {
+                if (item.open) {
+                    faqItems.forEach(other => {
+                        if (other !== item && other.open) {
+                            other.open = false;
+                        }
+                    });
+                }
+            });
         });
     }
 });

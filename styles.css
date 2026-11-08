@@ -1431,41 +1431,89 @@ body.loading {
 
 .apple-toast {
     pointer-events: auto;
-    background: #111216;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: rgba(14, 16, 22, 0.92);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+                0 0 32px rgba(48, 209, 88, 0.22);
     border-radius: var(--radius-pill);
-    padding: 0.65rem 1.3rem;
+    padding: 0.72rem 1.45rem;
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    font-size: 0.88rem;
-    font-weight: 500;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: #ffffff;
-    animation: dynamicIslandIn 0.35s var(--ease-apple) forwards;
-    transition: all 0.3s var(--ease-apple);
+    animation: dynamicIslandIn 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    will-change: transform, opacity, filter;
 }
 
 .apple-toast svg {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
     color: var(--accent-emerald);
     flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(48, 209, 88, 0.6));
+    animation: toastCheckPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
 }
 
 .apple-toast.leaving {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.92);
+    animation: dynamicIslandOut 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    pointer-events: none;
 }
 
 @keyframes dynamicIslandIn {
     0% {
         opacity: 0;
-        transform: translateY(-20px) scale(0.85);
+        transform: translateY(-34px) scale(0.7);
+        filter: blur(10px);
+    }
+    65% {
+        opacity: 1;
+        transform: translateY(4px) scale(1.05);
+        filter: blur(0);
+    }
+    85% {
+        transform: translateY(-2px) scale(0.98);
     }
     100% {
         opacity: 1;
         transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes dynamicIslandOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+    25% {
+        opacity: 0.95;
+        transform: translateY(3px) scale(1.02);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-32px) scale(0.72) scaleY(0.65);
+        filter: blur(10px);
+    }
+}
+
+@keyframes toastCheckPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(-35deg);
+    }
+    70% {
+        transform: scale(1.25) rotate(8deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
     }
 }
 
@@ -1916,7 +1964,11 @@ button,
         animation: none !important;
     }
     .faq-content,
-    .faq-chevron {
+    .faq-chevron,
+    .apple-toast,
+    .apple-toast.leaving,
+    .apple-toast svg {
         transition: none !important;
+        animation: none !important;
     }
 }

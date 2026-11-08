@@ -94,14 +94,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sessionStorage.getItem('justReloaded')) {
         sessionStorage.removeItem('justReloaded');
         setTimeout(() => {
-            showAppleToast('✦ Đã làm mới hệ thống 67B67T! ✦');
+            showAppleToast('✦ Đã làm mới hệ thống 67B67T! ✦', 2000);
         }, 2050);
     }
 
     /* --------------------------------------------------------------------------
        1. Apple Dynamic Island Style HUD Toast
        -------------------------------------------------------------------------- */
-    function showAppleToast(message) {
+    function showAppleToast(message, duration = 2000) {
         // Clear existing toasts to maintain single Dynamic Island HUD focus
         toastHub.innerHTML = '';
 
@@ -117,13 +117,25 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.innerHTML = `${checkIcon}<span>${message}</span>`;
         toastHub.appendChild(toast);
 
-        // Disappear smoothly after 2.8 seconds
+        // Disappear smoothly after exactly 2 seconds with in & out animations
         setTimeout(() => {
+            dismissToast();
+        }, duration);
+
+        function dismissToast() {
+            if (toast.classList.contains('leaving')) return;
             toast.classList.add('leaving');
-            toast.addEventListener('transitionend', () => {
-                toast.remove();
-            }, { once: true });
-        }, 2800);
+
+            const handleAnimEnd = () => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            };
+            toast.addEventListener('animationend', handleAnimEnd, { once: true });
+            
+            // Fallback safety timeout
+            setTimeout(handleAnimEnd, 460);
+        }
     }
 
     /* --------------------------------------------------------------------------

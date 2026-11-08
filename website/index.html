@@ -867,15 +867,9 @@
 
                 <!-- Collapsible RCON Config Drawer -->
                 <div class="admin-rcon-config-box" id="admin-rcon-config-drawer" style="display: none;">
-                    <div style="background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.3); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">
-                        <strong style="color: #ff9f0a; display: block; margin-bottom: 4px;">⚠️ HƯỚNG DẪN KẾT NỐI CHO GACHCLOUD HOSTING:</strong>
-                        Cổng mặc định <code>25575</code> bị chặn trên GachCloud. Để kết nối thành công:
-                        <ol style="margin: 6px 0 0 16px; padding: 0;">
-                            <li>Vào Panel GachCloud &rarr; tab <strong>Mạng (Network)</strong> của server.</li>
-                            <li>Xem <strong>cổng phụ được cấp</strong> (nếu chưa có, bấm <em>"Tạo cổng"</em> để lấy 1 cổng mở, VD: <code>25691</code> hoặc <code>28xxx</code>).</li>
-                            <li>Vào file <code>server.properties</code> &rarr; sửa dòng <code>rcon.port=&lt;cổng_phụ_ở_tab_mạng&gt;</code> &rarr; <strong>Restart lại server</strong>.</li>
-                            <li>Điền đúng số cổng phụ đó và mật khẩu vào ô bên dưới rồi bấm <strong>Lưu &amp; Test Kết Nối</strong>.</li>
-                        </ol>
+                    <div style="background: rgba(48, 209, 88, 0.08); border: 1px solid rgba(48, 209, 88, 0.25); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">
+                        <strong style="color: #30d158; display: block; margin-bottom: 3px;">✔ ĐỒNG BỘ CẤU HÌNH TỪ SERVER.PROPERTIES:</strong>
+                        <span>Thông tin cấu hình đã được sao chép chuẩn từ <code>server.properties</code> (Host: <code>node1.gachcloud.net</code>, Port: <code>25575</code>, Password: <code>mtgiahuy</code>). Khi duyệt đơn hàng, hệ thống sẽ kích hoạt lệnh <code>/setrankplus &lt;tên&gt;</code> cho người chơi.</span>
                     </div>
                     <div class="rcon-config-row">
                         <div class="rcon-input-group">
@@ -883,12 +877,12 @@
                             <input type="text" id="rcon-cfg-host" class="store-input" value="node1.gachcloud.net" style="padding: 6px 10px; font-size: 0.82rem;">
                         </div>
                         <div class="rcon-input-group">
-                            <label for="rcon-cfg-port">RCON Port (Cổng phụ GachCloud):</label>
-                            <input type="text" id="rcon-cfg-port" class="store-input" placeholder="Port phụ tab Mạng (VD: 25691)" value="" style="padding: 6px 10px; font-size: 0.82rem;">
+                            <label for="rcon-cfg-port">RCON Port:</label>
+                            <input type="text" id="rcon-cfg-port" class="store-input" placeholder="25575" value="25575" style="padding: 6px 10px; font-size: 0.82rem;">
                         </div>
                         <div class="rcon-input-group">
                             <label for="rcon-cfg-password">RCON Password:</label>
-                            <input type="password" id="rcon-cfg-password" class="store-input" placeholder="Mật khẩu RCON trong server.properties" style="padding: 6px 10px; font-size: 0.82rem;">
+                            <input type="password" id="rcon-cfg-password" class="store-input" placeholder="Mật khẩu RCON" value="mtgiahuy" style="padding: 6px 10px; font-size: 0.82rem;">
                         </div>
                         <div class="rcon-actions">
                             <button type="button" class="btn btn-apple-primary" id="btn-save-rcon-config" style="padding: 7px 14px; font-size: 0.82rem;">Lưu &amp; Test Kết Nối</button>

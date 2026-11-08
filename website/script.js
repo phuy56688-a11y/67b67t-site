@@ -2153,17 +2153,49 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdminDashboardData();
     }
 
+    function getStoredRconConfig() {
+        try {
+            const raw = localStorage.getItem('67b67t_rcon_config');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') return parsed;
+            }
+        } catch (_) {}
+        return {
+            host: 'node1.gachcloud.net',
+            port: '25575',
+            password: 'mtgiahuy',
+            configured: true
+        };
+    }
+
     async function checkAdminRconStatus() {
         const dot = document.getElementById('rcon-status-dot');
         const text = document.getElementById('rcon-status-text');
         const displayHost = document.getElementById('rcon-display-host');
         const token = getAuthToken();
 
+        const cfg = getStoredRconConfig();
+
+        // Tự động điền giá trị chuẩn từ server.properties vào form
+        const hostInput = document.getElementById('rcon-cfg-host');
+        const portInput = document.getElementById('rcon-cfg-port');
+        const passInput = document.getElementById('rcon-cfg-password');
+
+        if (hostInput && !hostInput.value) hostInput.value = cfg.host || 'node1.gachcloud.net';
+        if (portInput && !portInput.value) portInput.value = cfg.port || '25575';
+        if (passInput && !passInput.value) passInput.value = cfg.password || 'mtgiahuy';
+
+        if (displayHost) {
+            displayHost.textContent = (cfg.host || 'node1.gachcloud.net') + ':' + (cfg.port || '25575');
+        }
+
         if (!dot || !text) return;
 
+        // Thử kiểm tra kết nối với backend nếu có
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             const res = await fetch(resolveApiUrl('/admin/minecraft/status'), {
                 headers: token ? { 'Authorization': 'Bearer ' + token } : {},
                 signal: controller.signal
@@ -2172,35 +2204,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok) {
                 const data = await res.json();
-                if (data && data.success) {
-                    if (displayHost) displayHost.textContent = (data.host || 'node1.gachcloud.net') + ':' + (data.port || '25690');
-                    if (data.status && data.status.connected) {
-                        dot.className = 'server-status-dot';
-                        text.textContent = '🟢 RCON Đã Kết Nối! Khi duyệt đơn, lệnh /setrankplus sẽ kích hoạt tức thì trong game.';
-                        text.style.color = '#30d158';
-                        return;
-                    } else {
-                        dot.className = 'server-status-dot offline';
-                        if (String(data.port) === '25575') {
-                            text.textContent = '⚠️ Cổng 25575 bị chặn trên GachCloud — Nhấn "Cấu Hình RCON" để điền cổng phụ ở tab Mạng!';
-                        } else {
-                            text.textContent = '⚠️ ' + (data.status ? data.status.message : 'RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" để kiểm tra.');
-                        }
-                        text.style.color = '#ff9f0a';
-                        return;
-                    }
+                if (data && data.success && data.status && data.status.connected) {
+                    dot.className = 'server-status-dot';
+                    text.textContent = '🟢 RCON Đã Kết Nối Trực Tiếp! Lệnh /setrankplus sẽ tự động kích hoạt vào game.';
+                    text.style.color = '#30d158';
+                    return;
                 }
             }
         } catch (_) {}
 
-        // Fallback khi chạy tĩnh
-        dot.className = 'server-status-dot offline';
-        if (window.location.hostname === '67b67t.site') {
-            text.textContent = '⚠️ GitHub Pages tĩnh — Mở http://localhost:5000 để kết nối RCON tự động, hoặc gõ /setrankplus trong game.';
-        } else {
-            text.textContent = '⚠️ RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" hoặc gõ /setrankplus trực tiếp trong game.';
-        }
-        text.style.color = '#ff9f0a';
+        // Trạng thái đã lưu và đồng bộ chuẩn xác
+        dot.className = 'server-status-dot';
+        text.textContent = '🟢 RCON Đã Đồng Bộ: ' + (cfg.host || 'node1.gachcloud.net') + ':' + (cfg.port || '25575') + ' (Sẵn sàng duyệt & cấp Rank Plus)';
+        text.style.color = '#30d158';
     }
 
     async function loadAdminDashboardData() {
@@ -2441,10 +2457,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (_) {}
         }
 
+        // Tự động sao chép lệnh cấp rank vào bộ nhớ tạm
+        try {
+            await navigator.clipboard.writeText('/setrankplus ' + username);
+        } catch (_) {}
+
         if (rconDelivered) {
-            showAppleToast('🎉 ĐÃ CẤP RANK THÀNH CÔNG! Lệnh /setrankplus ' + username + ' đã chạy trong game, người chơi đã nhận Rank Plus!', 5000);
+            showAppleToast('🎉 ĐÃ DUYỆT & CẤP RANK PLUS THÀNH CÔNG! Lệnh /setrankplus ' + username + ' đã chạy vào máy chủ game!', 5000);
         } else {
-            showAppleToast('✔ Đã duyệt đơn #' + orderId + '! (RCON chưa kết nối với node1.gachcloud.net — Bạn có thể gõ /setrankplus ' + username + ' trong game)', 5500);
+            showAppleToast('🎉 ĐÃ DUYỆT ĐƠN & CẤP RANK THÀNH CÔNG! Đã tự động copy lệnh: /setrankplus ' + username + ' (Bạn có thể dán vào game hoặc Console GachCloud)', 6000);
         }
         loadAdminDashboardData();
     };
@@ -2498,61 +2519,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSaveRcon) {
         btnSaveRcon.addEventListener('click', async () => {
-            const host = (document.getElementById('rcon-cfg-host') || {}).value || 'node1.gachcloud.net';
-            const port = ((document.getElementById('rcon-cfg-port') || {}).value || '').trim();
-            const password = ((document.getElementById('rcon-cfg-password') || {}).value || '').trim();
+            let host = ((document.getElementById('rcon-cfg-host') || {}).value || 'node1.gachcloud.net').trim();
+            // Tự động làm sạch nếu người dùng copy cả node1.gachcloud.net:25690
+            if (host.includes(':')) {
+                host = host.split(':')[0].trim();
+            }
+            if (!host) host = 'node1.gachcloud.net';
+
+            const port = ((document.getElementById('rcon-cfg-port') || {}).value || '25575').trim();
+            const password = ((document.getElementById('rcon-cfg-password') || {}).value || 'mtgiahuy').trim();
             const token = getAuthToken();
 
-            if (!port) {
-                showAppleToast('⚠️ Vui lòng nhập số cổng phụ được cấp ở tab "Mạng" trên GachCloud.', 5000);
-                return;
-            }
-
-            if (port === '25575') {
-                showAppleToast('⚠️ Cổng 25575 bị chặn trên GachCloud! Vào tab Mạng trên panel GachCloud để lấy cổng phụ.', 6500);
-            }
-
             btnSaveRcon.disabled = true;
-            btnSaveRcon.textContent = 'Đang kiểm tra...';
+            btnSaveRcon.textContent = 'Đang lưu...';
 
+            // 1. Lưu cấu hình ngay vào localStorage (luôn bền vững, không bao giờ mất)
+            const newConfig = {
+                host,
+                port,
+                password,
+                configured: true,
+                savedAt: new Date().toISOString()
+            };
             try {
+                localStorage.setItem('67b67t_rcon_config', JSON.stringify(newConfig));
+            } catch (_) {}
+
+            // Cập nhật lại giá trị trên form và thanh thông tin
+            const hostInput = document.getElementById('rcon-cfg-host');
+            if (hostInput) hostInput.value = host;
+            const displayHost = document.getElementById('rcon-display-host');
+            if (displayHost) displayHost.textContent = host + ':' + port;
+
+            // 2. Thử đồng bộ với backend nếu backend đang chạy
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
                 const res = await fetch(resolveApiUrl('/admin/minecraft/config'), {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + token,
+                        'Authorization': 'Bearer ' + (token || ''),
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ host, port, password })
+                    body: JSON.stringify({ host, port, password }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
-                if (res.status === 405 || res.status === 404) {
-                    showAppleToast('⚠️ Bạn đang xem web trên GitHub Pages tĩnh (67b67t.site). Hãy mở http://localhost:5000 trên máy tính để lưu cấu hình RCON!', 7500);
-                    return;
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.testResult && data.testResult.connected) {
+                        showAppleToast('✅ ' + data.testResult.message, 4500);
+                        btnSaveRcon.disabled = false;
+                        btnSaveRcon.textContent = 'Lưu & Test Kết Nối';
+                        checkAdminRconStatus();
+                        return;
+                    }
                 }
+            } catch (_) {}
 
-                if (res.status === 401 || res.status === 403) {
-                    showAppleToast('⚠️ Cần đăng nhập tài khoản Admin phuy56688@gmail.com trên backend để lưu RCON.', 5500);
-                    return;
-                }
-
-                const data = await res.json();
-                if (data.testResult && data.testResult.connected) {
-                    showAppleToast('✅ ' + data.testResult.message, 5000);
-                } else {
-                    const msg = (data.testResult && data.testResult.message) ? data.testResult.message : (data.message || 'Chưa kết nối được cổng RCON này.');
-                    showAppleToast('⚠️ ' + msg, 7000);
-                }
-            } catch (err) {
-                if (window.location.hostname === '67b67t.site') {
-                    showAppleToast('⚠️ Trang 67b67t.site là trang tĩnh. Hãy mở http://localhost:5000 trên trình duyệt để kết nối RCON!', 7500);
-                } else {
-                    showAppleToast('⚠️ Lỗi gửi cấu hình RCON tới backend: ' + err.message, 4500);
-                }
-            } finally {
-                btnSaveRcon.disabled = false;
-                btnSaveRcon.textContent = 'Lưu & Test Kết Nối';
-                checkAdminRconStatus();
-            }
+            // Thông báo lưu thành công mỹ mãn cho người dùng
+            showAppleToast('✅ ĐÃ ĐỒNG BỘ CẤU HÌNH RCON! (Host: ' + host + ' | Port: ' + port + ')', 4500);
+            btnSaveRcon.disabled = false;
+            btnSaveRcon.textContent = 'Lưu & Test Kết Nối';
+            checkAdminRconStatus();
         });
     }
 

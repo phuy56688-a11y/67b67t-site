@@ -148,9 +148,47 @@ async function processPendingDeliveries() {
   }
 }
 
+/**
+ * Test RCON connection to Minecraft server
+ * @returns {Promise<{ connected: boolean, message: string }>}
+ */
+async function testConnection() {
+  if (!config.minecraft.password) {
+    return {
+      connected: false,
+      message: 'Chưa điền RCON_PASSWORD trong file .env hoặc cấu hình quản trị'
+    };
+  }
+  let rcon;
+  try {
+    rcon = new Rcon({
+      host: config.minecraft.host,
+      port: config.minecraft.port,
+      password: config.minecraft.password,
+      timeout: 4000
+    });
+    await rcon.connect();
+    const response = await rcon.send('list');
+    await rcon.end();
+    return {
+      connected: true,
+      message: `Kết nối thành công! Phản hồi máy chủ: ${response}`
+    };
+  } catch (err) {
+    if (rcon) {
+      try { await rcon.end(); } catch (_) {}
+    }
+    return {
+      connected: false,
+      message: `Lỗi kết nối (${config.minecraft.host}:${config.minecraft.port}): ${err.message}`
+    };
+  }
+}
+
 module.exports = {
   isValidUsername,
   executeRconCommand,
   grantRankPlus,
-  processPendingDeliveries
+  processPendingDeliveries,
+  testConnection
 };

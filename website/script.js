@@ -2149,7 +2149,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         openModal(adminModal);
+        checkAdminRconStatus();
         loadAdminDashboardData();
+    }
+
+    async function checkAdminRconStatus() {
+        const dot = document.getElementById('rcon-status-dot');
+        const text = document.getElementById('rcon-status-text');
+        const displayHost = document.getElementById('rcon-display-host');
+        const token = getAuthToken();
+
+        if (!dot || !text) return;
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const res = await fetch(resolveApiUrl('/admin/minecraft/status'), {
+                headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.success) {
+                    if (displayHost) displayHost.textContent = (data.host || 'node1.gachcloud.net') + ':' + (data.port || '25575');
+                    if (data.status && data.status.connected) {
+                        dot.className = 'server-status-dot';
+                        text.textContent = '🟢 RCON Đã Kết Nối! Khi duyệt đơn, lệnh /setrankplus sẽ kích hoạt tức thì trong game.';
+                        text.style.color = '#30d158';
+                        return;
+                    } else {
+                        dot.className = 'server-status-dot offline';
+                        text.textContent = '🔴 RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" để điền port và password của server GachCloud.';
+                        text.style.color = '#ff9f0a';
+                        return;
+                    }
+                }
+            }
+        } catch (_) {}
+
+        // Fallback khi chạy tĩnh
+        dot.className = 'server-status-dot offline';
+        text.textContent = '⚠️ RCON Chưa Kết Nối — Nhấn "Cấu Hình RCON" hoặc gõ /setrankplus trực tiếp trong game.';
+        text.style.color = '#ff9f0a';
     }
 
     async function loadAdminDashboardData() {
@@ -2355,6 +2398,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const adminOrders = getAdminOrdersStore();
+        const targetOrder = adminOrders.find(o => o.order_id === orderId);
+        const username = targetOrder ? targetOrder.username : 'Người chơi';
+
         // Cập nhật trạng thái ngay lập tức trong store
         updateLocalOrderState(orderId, {
             status: 'APPROVED',
@@ -2362,22 +2409,34 @@ document.addEventListener('DOMContentLoaded', () => {
             reviewed_at: new Date().toISOString()
         });
 
+        let rconDelivered = false;
+
         // Báo cho backend nếu có kết nối
         const token = getAuthToken();
         if (token) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-                await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
+                const timeoutId = setTimeout(() => controller.abort(), 4000);
+                const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token },
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.rcon_success) {
+                        rconDelivered = true;
+                    }
+                }
             } catch (_) {}
         }
 
-        showAppleToast('✔ Đã DUYỆT đơn hàng #' + orderId + ' thành công! Rank Plus đã được kích hoạt.', 3500);
+        if (rconDelivered) {
+            showAppleToast('🎉 ĐÃ CẤP RANK THÀNH CÔNG! Lệnh /setrankplus ' + username + ' đã chạy trong game, người chơi đã nhận Rank Plus!', 5000);
+        } else {
+            showAppleToast('✔ Đã duyệt đơn #' + orderId + '! (RCON chưa kết nối với node1.gachcloud.net — Bạn có thể gõ /setrankplus ' + username + ' trong game)', 5500);
+        }
         loadAdminDashboardData();
     };
 
@@ -2415,6 +2474,53 @@ document.addEventListener('DOMContentLoaded', () => {
         showAppleToast('✖ Đã từ chối đơn hàng #' + orderId, 3000);
         loadAdminDashboardData();
     };
+
+    // Toggle & Save RCON Config
+    const btnToggleRcon = document.getElementById('btn-toggle-rcon-config');
+    const rconDrawer = document.getElementById('admin-rcon-config-drawer');
+    const btnSaveRcon = document.getElementById('btn-save-rcon-config');
+
+    if (btnToggleRcon && rconDrawer) {
+        btnToggleRcon.addEventListener('click', () => {
+            const isHidden = rconDrawer.style.display === 'none';
+            rconDrawer.style.display = isHidden ? 'block' : 'none';
+        });
+    }
+
+    if (btnSaveRcon) {
+        btnSaveRcon.addEventListener('click', async () => {
+            const host = (document.getElementById('rcon-cfg-host') || {}).value || 'node1.gachcloud.net';
+            const port = (document.getElementById('rcon-cfg-port') || {}).value || '25575';
+            const password = (document.getElementById('rcon-cfg-password') || {}).value || '';
+            const token = getAuthToken();
+
+            btnSaveRcon.disabled = true;
+            btnSaveRcon.textContent = 'Đang kiểm tra...';
+
+            try {
+                const res = await fetch(resolveApiUrl('/admin/minecraft/config'), {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ host, port, password })
+                });
+                const data = await res.json();
+                if (data.testResult && data.testResult.connected) {
+                    showAppleToast('✅ ' + data.testResult.message, 4500);
+                } else {
+                    showAppleToast('⚠️ ' + (data.testResult ? data.testResult.message : 'Chưa kết nối được cổng RCON này.'), 5000);
+                }
+            } catch (err) {
+                showAppleToast('⚠️ Lỗi gửi cấu hình RCON tới backend.', 3000);
+            } finally {
+                btnSaveRcon.disabled = false;
+                btnSaveRcon.textContent = 'Lưu & Test Kết Nối';
+                checkAdminRconStatus();
+            }
+        });
+    }
 
     // Filter pills click
     filterPills.forEach(pill => {

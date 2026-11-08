@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=8.3">
+    <link rel="stylesheet" href="styles.css?v=8.4">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -851,6 +851,42 @@
                     </div>
                 </div>
 
+                <!-- Minecraft Server RCON Bridge Status Bar -->
+                <div class="admin-server-bridge-bar" id="admin-server-bridge">
+                    <div class="server-bridge-left">
+                        <span class="server-status-dot offline" id="rcon-status-dot"></span>
+                        <div class="server-bridge-meta">
+                            <strong>Kết nối máy chủ: <code class="mono-code" id="rcon-display-host">node1.gachcloud.net:25690</code></strong>
+                            <span id="rcon-status-text" class="server-bridge-sub">Đang kiểm tra kết nối RCON...</span>
+                        </div>
+                    </div>
+                    <div class="server-bridge-right">
+                        <button type="button" class="btn btn-sm btn-apple-subtle" id="btn-toggle-rcon-config">⚙️ Cấu Hình RCON</button>
+                    </div>
+                </div>
+
+                <!-- Collapsible RCON Config Drawer -->
+                <div class="admin-rcon-config-box" id="admin-rcon-config-drawer" style="display: none;">
+                    <div class="rcon-config-row">
+                        <div class="rcon-input-group">
+                            <label for="rcon-cfg-host">RCON Host:</label>
+                            <input type="text" id="rcon-cfg-host" class="store-input" value="node1.gachcloud.net" style="padding: 6px 10px; font-size: 0.82rem;">
+                        </div>
+                        <div class="rcon-input-group">
+                            <label for="rcon-cfg-port">RCON Port:</label>
+                            <input type="text" id="rcon-cfg-port" class="store-input" placeholder="Port RCON (VD: 25575)" value="25575" style="padding: 6px 10px; font-size: 0.82rem;">
+                        </div>
+                        <div class="rcon-input-group">
+                            <label for="rcon-cfg-password">RCON Password:</label>
+                            <input type="password" id="rcon-cfg-password" class="store-input" placeholder="Mật khẩu RCON" style="padding: 6px 10px; font-size: 0.82rem;">
+                        </div>
+                        <div class="rcon-actions">
+                            <button type="button" class="btn btn-apple-primary" id="btn-save-rcon-config" style="padding: 7px 14px; font-size: 0.82rem;">Lưu &amp; Test Kết Nối</button>
+                        </div>
+                    </div>
+                    <p class="rcon-help-text">💡 Để web tự động kết nối thế giới: Vào panel GachCloud &rarr; <code>server.properties</code> &rarr; bật <code>enable-rcon=true</code>, điền port và password trùng với bảng trên.</p>
+                </div>
+
                 <!-- Admin Action & Filter Toolbar -->
                 <div class="admin-toolbar">
                     <div class="admin-filter-pills">
@@ -960,6 +996,6 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=8.3"></script>
+    <script src="script.js?v=8.4"></script>
 </body>
 </html>

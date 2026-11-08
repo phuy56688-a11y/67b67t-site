@@ -50,7 +50,7 @@ const config = {
   },
 
   minecraft: {
-    host: process.env.RCON_HOST || '127.0.0.1',
+    host: process.env.RCON_HOST || 'node1.gachcloud.net',
     port: parseInt(process.env.RCON_PORT, 10) || 25575,
     password: process.env.RCON_PASSWORD || '',
     rankCommand: process.env.RCON_RANK_COMMAND || 'setrankplus {username}',

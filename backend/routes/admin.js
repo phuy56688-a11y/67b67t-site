@@ -5,6 +5,8 @@
 
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const config = require('../config/config');
 const db = require('../database/db');
 const { requireAdmin } = require('../middleware/auth');
@@ -260,6 +262,73 @@ router.get('/logs', async (req, res) => {
   } catch (err) {
     console.error('[Admin Logs Error]', err);
     return res.status(500).json({ success: false, message: 'Lỗi tải nhật ký quản trị' });
+  }
+});
+
+/**
+ * GET /api/admin/minecraft/status
+ * Kiểm tra trạng thái kết nối RCON tới máy chủ Minecraft (node1.gachcloud.net)
+ */
+router.get('/minecraft/status', async (req, res) => {
+  try {
+    const status = await minecraft.testConnection();
+    return res.json({
+      success: true,
+      host: config.minecraft.host,
+      port: config.minecraft.port,
+      configured: Boolean(config.minecraft.password),
+      status
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/minecraft/config
+ * Cập nhật cấu hình RCON (Host, Port, Password) và lưu vào file .env
+ */
+router.post('/minecraft/config', async (req, res) => {
+  try {
+    const { host, port, password } = req.body;
+    if (host && host.trim()) config.minecraft.host = host.trim();
+    if (port) config.minecraft.port = parseInt(port, 10);
+    if (password !== undefined) config.minecraft.password = password.trim();
+
+    // Cập nhật file .env
+    const envPath = path.join(__dirname, '..', '.env');
+    if (fs.existsSync(envPath)) {
+      let envContent = fs.readFileSync(envPath, 'utf8');
+      if (host) envContent = envContent.replace(/RCON_HOST=.*/g, `RCON_HOST=${host.trim()}`);
+      if (port) envContent = envContent.replace(/RCON_PORT=.*/g, `RCON_PORT=${port}`);
+      if (password !== undefined) envContent = envContent.replace(/RCON_PASSWORD=.*/g, `RCON_PASSWORD=${password.trim()}`);
+      fs.writeFileSync(envPath, envContent, 'utf8');
+    }
+
+    const testResult = await minecraft.testConnection();
+    return res.json({
+      success: true,
+      message: testResult.connected ? 'Kết nối RCON thành công!' : 'Đã lưu cấu hình.',
+      testResult
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Lỗi cập nhật cấu hình RCON: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/admin/minecraft/test
+ * Test kết nối RCON tức thì
+ */
+router.post('/minecraft/test', async (req, res) => {
+  try {
+    const testResult = await minecraft.testConnection();
+    return res.json({
+      success: true,
+      testResult
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 

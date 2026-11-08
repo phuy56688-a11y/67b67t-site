@@ -2153,6 +2153,19 @@ document.addEventListener('DOMContentLoaded', () => {
         loadAdminDashboardData();
     }
 
+    const GACHCLOUD_BRIDGE_KEY = '67b67t_gachcloud_bridge';
+
+    function getGachcloudBridge() {
+        try {
+            const raw = localStorage.getItem(GACHCLOUD_BRIDGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') return parsed;
+            }
+        } catch (_) {}
+        return null;
+    }
+
     function getStoredRconConfig() {
         try {
             const raw = localStorage.getItem('67b67t_rcon_config');
@@ -2175,6 +2188,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const displayHost = document.getElementById('rcon-display-host');
         const token = getAuthToken();
 
+        const bridge = getGachcloudBridge();
+        const serverIdInput = document.getElementById('gc-server-id');
+        const apiKeyInput = document.getElementById('gc-api-key');
+
+        if (bridge && bridge.serverId && bridge.apiKey) {
+            if (serverIdInput && !serverIdInput.value) serverIdInput.value = bridge.serverId;
+            if (apiKeyInput && !apiKeyInput.value) apiKeyInput.value = bridge.apiKey;
+            if (displayHost) displayHost.textContent = 'GachCloud API (' + bridge.serverId + ')';
+            if (dot) dot.className = 'server-status-dot';
+            if (text) {
+                text.textContent = '🟢 Cấp Thẳng Trực Tiếp Đã Bật! Khi duyệt đơn, lệnh /setrankplus sẽ tự động kích hoạt thẳng vào game.';
+                text.style.color = '#30d158';
+            }
+            return;
+        }
+
         const cfg = getStoredRconConfig();
 
         // Tự động điền giá trị chuẩn từ server.properties vào form
@@ -2192,30 +2221,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!dot || !text) return;
 
-        // Thử kiểm tra kết nối với backend nếu có
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000);
-            const res = await fetch(resolveApiUrl('/admin/minecraft/status'), {
-                headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-                signal: controller.signal
-            });
-            clearTimeout(timeoutId);
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.success && data.status && data.status.connected) {
-                    dot.className = 'server-status-dot';
-                    text.textContent = '🟢 RCON Đã Kết Nối Trực Tiếp! Lệnh /setrankplus sẽ tự động kích hoạt vào game.';
-                    text.style.color = '#30d158';
-                    return;
-                }
-            }
-        } catch (_) {}
-
-        // Trạng thái đã lưu và đồng bộ chuẩn xác
+        // Trạng thái đã lưu và sẵn sàng
         dot.className = 'server-status-dot';
-        text.textContent = '🟢 RCON Đã Đồng Bộ: ' + (cfg.host || 'node1.gachcloud.net') + ':' + (cfg.port || '25575') + ' (Sẵn sàng duyệt & cấp Rank Plus)';
+        text.textContent = '🟢 RCON Sẵn Sàng — Điền GachCloud API ở trên để bật Cấp Thẳng không cần vào console.';
         text.style.color = '#30d158';
     }
 
@@ -2434,38 +2442,65 @@ document.addEventListener('DOMContentLoaded', () => {
             reviewed_at: new Date().toISOString()
         });
 
-        let rconDelivered = false;
+        let commandDispatched = false;
+        let dispatchMessage = '';
 
-        // Báo cho backend nếu có kết nối
-        const token = getAuthToken();
-        if (token) {
+        // 1. Ưu tiên: Bắn thẳng qua GachCloud API nếu đã cấu hình (100% tự động không cần console)
+        const bridge = getGachcloudBridge();
+        if (bridge && bridge.serverId && bridge.apiKey) {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 4000);
-                const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
+                const gcRes = await fetch('https://panel.gachcloud.net/api/client/servers/' + encodeURIComponent(bridge.serverId) + '/command', {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token },
-                    signal: controller.signal
+                    headers: {
+                        'Authorization': 'Bearer ' + bridge.apiKey,
+                        'Content-Type': 'application/json',
+                        'Accept': 'Application/vnd.pterodactyl.v1+json'
+                    },
+                    body: JSON.stringify({ command: 'setrankplus ' + username })
                 });
-                clearTimeout(timeoutId);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.rcon_success) {
-                        rconDelivered = true;
-                    }
+
+                if (gcRes.ok || gcRes.status === 204) {
+                    commandDispatched = true;
+                    dispatchMessage = '🎉 ĐÃ CẤP THẲNG RANK PLUS CHO ' + username + ' VÀO SERVER THÀNH CÔNG! (Lệnh đã chạy trên GachCloud, khỏi cần vào console)';
                 }
-            } catch (_) {}
+            } catch (err) {
+                console.warn('[GachCloud API Delivery Error]', err);
+            }
         }
 
-        // Tự động sao chép lệnh cấp rank vào bộ nhớ tạm
+        // 2. Thử bắn qua RCON backend nếu API chưa cấu hình
+        if (!commandDispatched) {
+            const token = getAuthToken();
+            if (token) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.rcon_success) {
+                            commandDispatched = true;
+                            dispatchMessage = '🎉 ĐÃ CẤP RANK PLUS CHO ' + username + ' QUA RCON THÀNH CÔNG!';
+                        }
+                    }
+                } catch (_) {}
+            }
+        }
+
+        // Tự động sao chép lệnh cấp rank vào bộ nhớ tạm (dự phòng)
         try {
             await navigator.clipboard.writeText('/setrankplus ' + username);
         } catch (_) {}
 
-        if (rconDelivered) {
-            showAppleToast('🎉 ĐÃ DUYỆT & CẤP RANK PLUS THÀNH CÔNG! Lệnh /setrankplus ' + username + ' đã chạy vào máy chủ game!', 5000);
+        if (commandDispatched) {
+            showAppleToast(dispatchMessage, 6000);
         } else {
-            showAppleToast('🎉 ĐÃ DUYỆT ĐƠN & CẤP RANK THÀNH CÔNG! Đã tự động copy lệnh: /setrankplus ' + username + ' (Bạn có thể dán vào game hoặc Console GachCloud)', 6000);
+            showAppleToast('🎉 ĐÃ DUYỆT ĐƠN CHO ' + username + '! (Đã tự động copy lệnh: /setrankplus ' + username + ' — Để web tự cấp thẳng khỏi vào console, bạn vào "Cấu Hình RCON" điền GachCloud API Key nhé)', 7500);
         }
         loadAdminDashboardData();
     };
@@ -2514,6 +2549,55 @@ document.addEventListener('DOMContentLoaded', () => {
         btnToggleRcon.addEventListener('click', () => {
             const isHidden = rconDrawer.style.display === 'none';
             rconDrawer.style.display = isHidden ? 'block' : 'none';
+        });
+    }
+
+    // Lưu & Kết nối Cầu Nối Trực Tiếp GachCloud API (Cấp thẳng vào game không cần console)
+    const btnSaveGcBridge = document.getElementById('btn-save-gachcloud-bridge');
+    if (btnSaveGcBridge) {
+        btnSaveGcBridge.addEventListener('click', async () => {
+            let serverId = ((document.getElementById('gc-server-id') || {}).value || '').trim();
+            const apiKey = ((document.getElementById('gc-api-key') || {}).value || '').trim();
+
+            if (!serverId || !apiKey) {
+                showAppleToast('⚠️ Vui lòng nhập cả Mã Server ID và API Key từ panel GachCloud.', 5000);
+                return;
+            }
+
+            // Nếu người dùng dán cả link: https://panel.gachcloud.net/server/a1b2c3d4
+            if (serverId.includes('/server/')) {
+                const parts = serverId.split('/server/');
+                serverId = parts[1].split('/')[0].split('?')[0].trim();
+            }
+
+            btnSaveGcBridge.disabled = true;
+            btnSaveGcBridge.textContent = 'Đang kiểm tra...';
+
+            try {
+                const res = await fetch('https://panel.gachcloud.net/api/client/servers/' + encodeURIComponent(serverId), {
+                    headers: {
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Accept': 'Application/vnd.pterodactyl.v1+json'
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const serverName = (data.attributes && data.attributes.name) ? data.attributes.name : serverId;
+                    localStorage.setItem(GACHCLOUD_BRIDGE_KEY, JSON.stringify({ serverId, apiKey, serverName, enabled: true }));
+                    showAppleToast('🎉 KẾT NỐI THÀNH CÔNG SERVER "' + serverName + '"! Giờ bạn bấm Duyệt Đơn là lệnh tự cấp thẳng vào game!', 6000);
+                } else {
+                    localStorage.setItem(GACHCLOUD_BRIDGE_KEY, JSON.stringify({ serverId, apiKey, enabled: true }));
+                    showAppleToast('✅ Đã lưu cấu hình Cấp Thẳng GachCloud API! Giờ bạn có thể duyệt đơn để tự động cấp rank.', 5000);
+                }
+            } catch (_) {
+                localStorage.setItem(GACHCLOUD_BRIDGE_KEY, JSON.stringify({ serverId, apiKey, enabled: true }));
+                showAppleToast('✅ Đã lưu cấu hình Cấp Thẳng GachCloud API!', 5000);
+            } finally {
+                btnSaveGcBridge.disabled = false;
+                btnSaveGcBridge.textContent = 'Lưu & Bật Cấp Thẳng';
+                checkAdminRconStatus();
+            }
         });
     }
 

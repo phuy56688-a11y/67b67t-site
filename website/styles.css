@@ -4010,7 +4010,7 @@ button,
 
 .method-option-top {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 8px;
 }
@@ -4041,6 +4041,7 @@ button,
     position: relative;
     transition: all 0.2s ease;
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 .store-method-option.active .method-option-radio {

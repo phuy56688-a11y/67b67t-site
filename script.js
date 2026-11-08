@@ -1598,7 +1598,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (optStoreBank) optStoreBank.classList.remove('active');
             if (storeDisplayPrice) storeDisplayPrice.innerHTML = '<span class="currency">VNĐ</span> 10.000';
             if (storeDiscountTag) storeDiscountTag.textContent = '-80%';
-            if (storeBadgeDiscount) storeBadgeDiscount.textContent = '💳 NẠP NHANH BẰNG THẺ CÀO 10.000Đ';
+            if (storeBadgeDiscount) storeBadgeDiscount.textContent = '💳 THANH TOÁN BẰNG THẺ CÀO 10.000Đ';
             if (btnStoreBuyLabel) btnStoreBuyLabel.textContent = 'Nạp Bằng Thẻ Cào (10.000đ)';
         }
     }

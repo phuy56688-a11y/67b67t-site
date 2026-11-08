@@ -291,7 +291,11 @@ router.get('/minecraft/status', async (req, res) => {
 router.post('/minecraft/config', async (req, res) => {
   try {
     const { host, port, password } = req.body;
-    if (host && host.trim()) config.minecraft.host = host.trim();
+    let cleanHost = (host || '').trim().replace(/^https?:\/\//i, '');
+    if (cleanHost.includes(':')) {
+      cleanHost = cleanHost.split(':')[0].trim();
+    }
+    if (cleanHost) config.minecraft.host = cleanHost;
     if (port) config.minecraft.port = parseInt(port, 10);
     if (password !== undefined) config.minecraft.password = password.trim();
 
@@ -299,7 +303,7 @@ router.post('/minecraft/config', async (req, res) => {
     const envPath = path.join(__dirname, '..', '.env');
     if (fs.existsSync(envPath)) {
       let envContent = fs.readFileSync(envPath, 'utf8');
-      if (host) envContent = envContent.replace(/RCON_HOST=.*/g, `RCON_HOST=${host.trim()}`);
+      if (cleanHost) envContent = envContent.replace(/RCON_HOST=.*/g, `RCON_HOST=${cleanHost}`);
       if (port) envContent = envContent.replace(/RCON_PORT=.*/g, `RCON_PORT=${port}`);
       if (password !== undefined) envContent = envContent.replace(/RCON_PASSWORD=.*/g, `RCON_PASSWORD=${password.trim()}`);
       fs.writeFileSync(envPath, envContent, 'utf8');
@@ -308,7 +312,7 @@ router.post('/minecraft/config', async (req, res) => {
     const testResult = await minecraft.testConnection();
     return res.json({
       success: true,
-      message: testResult.connected ? 'Kết nối RCON thành công!' : 'Đã lưu cấu hình.',
+      message: testResult.connected ? 'Kết nối RCON thành công!' : (testResult.message || 'Đã lưu cấu hình.'),
       testResult
     });
   } catch (err) {

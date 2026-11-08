@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=9.2">
+    <link rel="stylesheet" href="styles.css?v=9.3">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -936,27 +936,27 @@
                 </div>
 
                 <!-- Admin Action & Filter Toolbar -->
+                <!-- Admin Action & Filter Toolbar (Tối ưu hóa cho di động & máy tính) -->
                 <div class="admin-toolbar">
-                    <div class="admin-filter-pills">
-                        <button type="button" class="filter-pill active" data-status="ALL">Tất Cả</button>
-                        <button type="button" class="filter-pill" data-status="AWAITING_REVIEW">⚡ Chờ Duyệt</button>
-                        <button type="button" class="filter-pill" data-status="APPROVED">✔ Đã Duyệt</button>
-                        <button type="button" class="filter-pill" data-status="REJECTED">✖ Từ Chối</button>
-                    </div>
-                    <div class="admin-method-filter-row" style="margin-top: 6px;">
-                        <span class="admin-method-filter-label">Phương thức:</span>
-                        <button type="button" class="filter-pill active method-pill" data-method="ALL">Toàn Bộ</button>
-                        <button type="button" class="filter-pill method-pill" data-method="BANK">🏦 Ngân Hàng (5k)</button>
-                        <button type="button" class="filter-pill method-pill" data-method="CARD">💳 Thẻ Cào (10k)</button>
-                    </div>
+                    <div class="admin-toolbar-filters">
+                        <div class="admin-filter-pills" id="admin-status-filters">
+                            <button type="button" class="filter-pill active" data-status="ALL">Tất Cả</button>
+                            <button type="button" class="filter-pill filter-pill-pending" data-status="AWAITING_REVIEW">⚡ Chờ Duyệt</button>
+                            <button type="button" class="filter-pill" data-status="APPROVED">✔ Đã Duyệt</button>
+                            <button type="button" class="filter-pill" data-status="REJECTED">✖ Từ Chối</button>
+                        </div>
+                        <div class="admin-method-filter-row">
+                            <button type="button" class="filter-pill active method-pill" data-method="ALL">Toàn Bộ</button>
+                            <button type="button" class="filter-pill method-pill" data-method="BANK">🏦 Ngân Hàng (5k)</button>
+                            <button type="button" class="filter-pill method-pill" data-method="CARD">💳 Thẻ Cào (10k)</button>
+                        </div>
                     </div>
                     <div class="admin-search-box">
-                        <input type="text" id="admin-search-input" class="store-input" placeholder="Tìm theo tên Minecraft, email, mã đơn...">
-                        <button type="button" class="btn btn-apple-subtle" id="btn-admin-refresh">🔄 Làm Mới</button>
+                        <input type="text" id="admin-search-input" class="store-input" placeholder="🔍 Tìm tên nhân vật, mã đơn, email...">
+                        <button type="button" class="btn btn-apple-subtle btn-refresh-toolbar" id="btn-admin-refresh" title="Làm mới">🔄 Làm Mới</button>
                     </div>
                 </div>
 
-                <!-- Orders Table Container -->
                 <div class="admin-orders-table-wrap" id="admin-orders-container">
                     <div class="text-center" style="padding: 40px;">
                         <div class="pulse-dot" style="margin: 0 auto 12px;"></div>
@@ -1051,6 +1051,13 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=9.2"></script>
+    <script src="script.js?v=9.3"></script>
+    <!-- Floating Mobile Admin Access Button (Hiển thị khi đăng nhập Admin trên điện thoại) -->
+    <button type="button" class="floating-admin-btn" id="floating-admin-btn" aria-label="Mở Bảng Quản Trị Rank">
+        <span class="floating-admin-icon">👑</span>
+        <span class="floating-admin-label">Quản Trị Rank</span>
+        <span class="floating-admin-badge" id="floating-admin-badge" style="display: none;">0</span>
+    </button>
+
 </body>
 </html>

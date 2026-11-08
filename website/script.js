@@ -1084,6 +1084,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navAdminCrown) {
                 navAdminCrown.style.display = isAdmin ? 'inline-block' : 'none';
             }
+            const floatingAdminBtn = document.getElementById('floating-admin-btn');
+            if (floatingAdminBtn) {
+                floatingAdminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+            }
 
             // Dropdown Menu
             if (dropdownUserAvatar) dropdownUserAvatar.src = user.avatar || 'https://mc-heads.net/avatar/MHF_Steve/48';
@@ -1103,6 +1107,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navAuthLabel) navAuthLabel.textContent = 'Đăng Nhập';
             if (navAdminCrown) navAdminCrown.style.display = 'none';
             if (btnDropdownAdmin) btnDropdownAdmin.style.display = 'none';
+            const floatingAdminBtnGuest = document.getElementById('floating-admin-btn');
+            if (floatingAdminBtnGuest) floatingAdminBtnGuest.style.display = 'none';
         }
     }
 
@@ -2511,6 +2517,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (adminStatApproved) adminStatApproved.textContent = approved;
         if (adminStatRevenue) adminStatRevenue.textContent = revenue.toLocaleString('vi-VN') + ' đ';
 
+        // Cập nhật số đếm trên các nút bộ lọc và nút nổi di động
+        const pendingPill = document.querySelector('.filter-pill[data-status="AWAITING_REVIEW"]');
+        if (pendingPill) {
+            pendingPill.innerHTML = '⚡ Chờ Duyệt' + (pending > 0 ? ' <span class="pill-count-badge">' + pending + '</span>' : '');
+            if (pending > 0) {
+                pendingPill.classList.add('has-pending');
+            } else {
+                pendingPill.classList.remove('has-pending');
+            }
+        }
+        const allPill = document.querySelector('.filter-pill[data-status="ALL"]');
+        if (allPill) {
+            allPill.innerHTML = 'Tất Cả <span class="pill-count-badge">' + total + '</span>';
+        }
+        const floatingBadge = document.getElementById('floating-admin-badge');
+        if (floatingBadge) {
+            floatingBadge.textContent = pending;
+            floatingBadge.style.display = pending > 0 ? 'inline-block' : 'none';
+        }
+
         // Tải danh sách đơn hàng ra giao diện ngay
         loadAdminOrdersList();
 
@@ -2575,7 +2601,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!filtered || filtered.length === 0) {
-                adminOrdersContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-tertiary);"><p>Không có đơn hàng nào phù hợp với bộ lọc hiện tại.</p></div>';
+                adminOrdersContainer.innerHTML = '<div style="text-align: center; padding: 45px 15px; color: var(--text-tertiary);"><p style="font-size: 1.05rem; margin-bottom: 6px;">🔍 Không tìm thấy đơn hàng nào</p><span style="font-size: 0.82rem;">Thử đổi bộ lọc hoặc từ khóa tìm kiếm nhé!</span></div>';
                 return;
             }
 
@@ -2586,16 +2612,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (ord.status === 'AWAITING_REVIEW') {
                     badgeClass = 'badge-awaiting';
-                    badgeText = '⚡ Chờ Admin Duyệt';
+                    badgeText = '⚡ Chờ Duyệt';
                 } else if (ord.status === 'APPROVED' || ord.status === 'DELIVERED') {
                     badgeClass = 'badge-approved';
-                    badgeText = '✔ Đã Duyệt (Cấp Rank)';
+                    badgeText = '✔ Đã Duyệt';
                 } else if (ord.status === 'APPROVED_PENDING_DELIVERY') {
                     badgeClass = 'badge-approved';
-                    badgeText = '⏳ Đã Duyệt (Chờ Server Online)';
+                    badgeText = '⏳ Chờ Online';
                 } else if (ord.status === 'REJECTED') {
                     badgeClass = 'badge-rejected';
-                    badgeText = '✖ Đã Từ Chối';
+                    badgeText = '✖ Từ Chối';
                 }
 
                 const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : '';
@@ -2605,47 +2631,95 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? '<span class="badge-method badge-method-card">💳 THẺ CÀO</span>'
                     : '<span class="badge-method badge-method-bank">🏦 NGÂN HÀNG</span>';
 
-                let receiptSection = '<span style="color: var(--text-tertiary);">Chưa nộp biên lai</span>';
-                if (ord.receipt_url || ord.receipt_note) {
-                    receiptSection = '<div class="admin-receipt-preview">';
-                    if (ord.receipt_url) {
-                        receiptSection += '<a href="' + ord.receipt_url + '" target="_blank" class="admin-receipt-link">📷 Xem ảnh biên lai đính kèm</a><br>';
-                    }
-                    if (ord.receipt_note) {
-                        receiptSection += '<span style="font-size: 0.8rem; color: #dfdfe2;">Ghi chú: ' + ord.receipt_note + '</span>';
-                    }
-                    receiptSection += '</div>';
-                }
+                const rawPin = ord.card_pin_raw || ord.code || '';
+                const rawSerial = ord.card_serial_raw || ord.serial || ord.card_serial_masked || '••••••••';
 
-                let paymentDetailHtml = '';
+                // Chi tiết thanh toán (Tối ưu giao diện cho màn hình điện thoại & máy tính)
+                let detailCardHtml = '';
                 if (isCard) {
-                    paymentDetailHtml = '<div style="font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">' +
-                        '<div>Nhà mạng: <strong style="color: #bf5af2;">' + (ord.card_telco || 'Thẻ cào') + '</strong> &bull; Mệnh giá: <strong style="color: #30d158;">10.000 đ</strong></div>' +
-                        '<div style="font-size: 0.78rem; color: #f5f5f7; margin-top: 4px;">Serial: <code class="mono-code">' + (ord.card_serial_raw || ord.card_serial_masked || '••••••••') + '</code>' +
-                        (ord.card_pin_raw ? ' &bull; PIN: <code class="mono-code" style="color: #ffd60a; font-weight: bold;">' + ord.card_pin_raw + '</code> <button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + ord.card_pin_raw + '\'); showAppleToast(\'Đã copy mã PIN thẻ!\', 2000);">Copy</button>' : '') +
-                        (ord.card_trans_id ? ' &bull; GD: ' + ord.card_trans_id : '') + '</div>' +
-                        (ord.rejection_reason ? '<div style="color: #ff6961; font-size: 0.78rem; margin-top: 2px;">Lý do: ' + ord.rejection_reason + '</div>' : '') +
+                    detailCardHtml = '<div class="admin-card-details-box">' +
+                        '<div class="card-detail-header">' +
+                        '<span class="card-telco-tag">' + (ord.card_telco || 'Thẻ cào') + '</span>' +
+                        '<span class="card-price-tag">10.000 VNĐ</span>' +
+                        '</div>' +
+                        '<div class="card-code-row">' +
+                        '<div class="card-field">' +
+                        '<span class="card-field-label">MÃ THẺ (PIN):</span>' +
+                        '<code class="card-pin-code">' + (rawPin || '••••••••') + '</code>' +
+                        '</div>' +
+                        (rawPin ? '<button type="button" class="btn-copy-pin-mobile" onclick="navigator.clipboard.writeText(\'' + rawPin + '\'); showAppleToast(\'📋 Đã copy mã PIN: ' + rawPin + '\', 2500);">📋 Copy PIN</button>' : '') +
+                        '</div>' +
+                        '<div class="card-code-row serial-row">' +
+                        '<div class="card-field">' +
+                        '<span class="card-field-label">SERIAL:</span>' +
+                        '<code class="card-serial-code">' + rawSerial + '</code>' +
+                        '</div>' +
+                        '<button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + rawSerial + '\'); showAppleToast(\'📋 Đã copy Serial: ' + rawSerial + '\', 2000);">Copy</button>' +
+                        '</div>' +
+                        (ord.rejection_reason ? '<div style="color: #ff6961; font-size: 0.78rem; margin-top: 6px;">Lý do: ' + ord.rejection_reason + '</div>' : '') +
                         '</div>';
                 } else {
-                    paymentDetailHtml = receiptSection;
+                    const transferCode = ord.receipt_note || (ord.manual_payment && ord.manual_payment.transferContent) || ord.order_id;
+                    detailCardHtml = '<div class="admin-bank-details-box">' +
+                        '<div class="bank-detail-header">' +
+                        '<span class="bank-tag">🏦 Chuyển khoản ZaloPay / Bank</span>' +
+                        '<span class="bank-price-tag">5.000 VNĐ</span>' +
+                        '</div>' +
+                        '<div class="bank-content-row">' +
+                        '<span class="card-field-label" style="margin-right: 6px;">Nội dung CK:</span>' +
+                        '<code class="bank-transfer-code">' + transferCode + '</code>' +
+                        '<button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + transferCode + '\'); showAppleToast(\'📋 Đã copy nội dung: ' + transferCode + '\', 2000);" style="margin-left: auto;">Copy</button>' +
+                        '</div>' +
+                        (ord.receipt_url ? '<div style="margin-top: 6px;"><a href="' + ord.receipt_url + '" target="_blank" class="admin-receipt-link">📷 Xem ảnh biên lai đính kèm</a></div>' : '') +
+                        (ord.rejection_reason ? '<div style="color: #ff6961; font-size: 0.78rem; margin-top: 6px;">Lý do: ' + ord.rejection_reason + '</div>' : '') +
+                        '</div>';
                 }
 
                 const isApproved = ord.status === 'APPROVED' || ord.status === 'DELIVERED' || ord.status === 'APPROVED_PENDING_DELIVERY';
                 const isRejected = ord.status === 'REJECTED';
 
-                let actionBtns = '';
+                let actionsHtml = '';
                 if (!isApproved && !isRejected) {
-                    actionBtns += '<button type="button" class="btn-admin-approve" onclick="adminApproveOrder(\'' + ord.order_id + '\')">✔ Duyệt Đơn &amp; Cấp Rank</button>';
-                    actionBtns += '<button type="button" class="btn-admin-reject" onclick="adminRejectOrder(\'' + ord.order_id + '\')">✖ Từ Chối</button>';
+                    actionsHtml = '<div class="admin-order-actions-wrap">' +
+                        '<button type="button" class="btn-admin-approve-primary" onclick="adminApproveOrder(\'' + ord.order_id + '\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="action-icon"><polyline points="20 6 9 17 4 12"></polyline></svg>' +
+                        '<span>DUYỆT &amp; CẤP RANK PLUS</span>' +
+                        '</button>' +
+                        '<div class="admin-order-sub-actions">' +
+                        '<a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn-admin-sub btn-console" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã copy lệnh và mở Console df28479b! Nhấn Ctrl + V rồi Enter nhé!\', 4000);">' +
+                        '🚀 Mở Console' +
+                        '</a>' +
+                        '<button type="button" class="btn-admin-sub btn-copy" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);">' +
+                        '📋 Copy Lệnh' +
+                        '</button>' +
+                        '<button type="button" class="btn-admin-sub btn-reject" onclick="adminRejectOrder(\'' + ord.order_id + '\')">' +
+                        '✖ Từ Chối' +
+                        '</button>' +
+                        '</div>' +
+                        '</div>';
                 } else if (isApproved) {
-                    actionBtns += '<span style="color: #30d158; font-size: 0.82rem; font-weight: 600;">✔ Đã duyệt bởi ' + (ord.reviewed_by || 'Admin') + '</span>';
+                    actionsHtml = '<div class="admin-order-actions-wrap approved">' +
+                        '<div class="approved-status-bar">' +
+                        '<span class="status-approved-text">✔ Đã duyệt &amp; cấp Rank</span>' +
+                        '<span class="approved-by-sub">bởi ' + (ord.reviewed_by || 'Admin') + '</span>' +
+                        '</div>' +
+                        '<div class="admin-order-sub-actions">' +
+                        '<a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn-admin-sub btn-console" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã copy lệnh và mở Console df28479b!\', 4000);">' +
+                        '🚀 Mở Console' +
+                        '</a>' +
+                        '<button type="button" class="btn-admin-sub btn-copy" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);">' +
+                        '📋 Copy Lệnh' +
+                        '</button>' +
+                        '</div>' +
+                        '</div>';
                 } else {
-                    actionBtns += '<span style="color: #ff453a; font-size: 0.82rem; font-weight: 600;">✖ Đã từ chối' + (ord.rejection_reason ? ': ' + ord.rejection_reason : '') + '</span>';
+                    actionsHtml = '<div class="admin-order-actions-wrap rejected">' +
+                        '<div style="background: rgba(255, 69, 58, 0.1); border: 1px solid rgba(255, 69, 58, 0.3); border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; color: #ff6961;">' +
+                        '<strong>✖ Đã từ chối đơn hàng</strong>' +
+                        '<span style="display: block; font-size: 0.78rem; color: #dfdfe2; margin-top: 2px;">' + (ord.rejection_reason || 'Không khớp thông tin chuyển khoản') + '</span>' +
+                        '</div>' +
+                        '</div>';
                 }
-                actionBtns += ' <button type="button" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);" title="Sao chép lệnh" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px;">📋 Copy Lệnh</button>';
-                actionBtns += ' <a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã copy lệnh và mở Console df28479b! Nhấn Ctrl + V rồi Enter nhé!\', 4000);" title="Mở thẳng console df28479b" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px; text-decoration: none;">🚀 Mở Console df28479b</a>';
-
-                const displayAmount = ord.amount || (isCard ? 10000 : 5000);
 
                 html += '<div class="admin-order-card">' +
                     '<div class="admin-order-header">' +
@@ -2656,28 +2730,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     '<span>' + buyerEmail + ' &bull; ' + createdDate + '</span>' +
                     '</div>' +
                     '</div>' +
-                    '<div>' +
+                    '<div class="admin-order-badges">' +
                     methodBadge +
                     '<span class="admin-order-id-badge">#' + ord.order_id + '</span> ' +
                     '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
                     '</div>' +
                     '</div>' +
-                    '<div class="admin-order-body">' +
-                    '<div>' +
-                    '<strong style="display: block; font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 4px;">' + (isCard ? 'Thông tin thẻ cào:' : 'Chứng từ thanh toán:') + '</strong>' +
-                    paymentDetailHtml +
-                    '</div>' +
-                    '<div style="text-align: right;">' +
-                    '<strong style="display: block; font-size: 1.15rem; color: #30d158;">' + displayAmount.toLocaleString('vi-VN') + ' đ</strong>' +
-                    '<span style="font-size: 0.78rem; color: var(--text-tertiary);">' + (isCard ? 'Thẻ Cào 10k' : 'Chuyển Khoản 5k') + '</span>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="admin-order-actions">' +
-                    actionBtns +
-                    '</div>' +
+                    detailCardHtml +
+                    actionsHtml +
                     '</div>';
             });
-
             adminOrdersContainer.innerHTML = html;
         }
 
@@ -2975,6 +3037,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnAdminRefresh) btnAdminRefresh.addEventListener('click', loadAdminDashboardData);
     if (adminSearchInput) {
+        adminSearchInput.addEventListener('input', () => {
+            loadAdminOrdersList();
+        });
         adminSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();

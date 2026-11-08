@@ -868,6 +868,99 @@ body.loading {
     line-height: 1.6;
 }
 
+/* Server Hardware Photo Showcase */
+.hardware-server-frame {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(41, 151, 255, 0.18);
+    aspect-ratio: 16 / 11;
+    width: 100%;
+    max-height: 290px;
+    background: #08090c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.server-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.65s ease;
+    filter: brightness(0.95) contrast(1.05);
+}
+
+.bento-card:hover .server-photo {
+    transform: scale(1.06);
+    filter: brightness(1.04) contrast(1.1);
+}
+
+.server-photo-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0) 35%,
+        rgba(8, 10, 14, 0.45) 70%,
+        rgba(8, 10, 14, 0.9) 100%
+    );
+    border-radius: inherit;
+    z-index: 1;
+}
+
+.server-photo-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background: rgba(12, 14, 20, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    z-index: 2;
+}
+
+.server-photo-badge .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-emerald);
+    box-shadow: 0 0 10px var(--accent-emerald);
+    flex-shrink: 0;
+    animation: serverStatusPulse 2s infinite ease-in-out;
+}
+
+.server-badge-text {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #ffffff;
+    font-family: var(--font-apple);
+    text-transform: uppercase;
+}
+
+@keyframes serverStatusPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        transform: scale(0.85);
+    }
+}
+
 .hardware-chip {
     background: radial-gradient(circle, rgba(41, 151, 255, 0.15) 0%, rgba(10, 11, 14, 0.9) 75%);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1967,7 +2060,9 @@ button,
     .faq-chevron,
     .apple-toast,
     .apple-toast.leaving,
-    .apple-toast svg {
+    .apple-toast svg,
+    .server-photo,
+    .server-photo-badge .pulse-dot {
         transition: none !important;
         animation: none !important;
     }

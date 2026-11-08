@@ -47,8 +47,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Định dạng email không hợp lệ' });
     }
 
-    if (!password || typeof password !== 'string' || password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Mật khẩu phải chứa ít nhất 6 ký tự' });
+    if (!password || typeof password !== 'string' || password.length < 6 || password.length > 30) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu phải từ 6 đến 30 ký tự' });
     }
 
     // Kiểm tra xem email đã được đăng ký trước đó chưa
@@ -104,6 +104,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ email và mật khẩu' });
     }
 
+    if (typeof password !== 'string' || password.length < 6 || password.length > 30) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu phải từ 6 đến 30 ký tự' });
+    }
+
     const cleanEmail = email.toLowerCase().trim();
     const user = await db.get('SELECT * FROM users WHERE email = ?', [cleanEmail]);
 
@@ -114,7 +118,7 @@ router.post('/login', async (req, res) => {
     if (!user.password_hash) {
       return res.status(400).json({
         success: false,
-        message: 'Tài khoản này được đăng ký qua Google. Vui lòng bấm "Đăng nhập bằng Google".'
+        message: 'Tài khoản này chưa có mật khẩu. Vui lòng dùng tính năng Quên Mật Khẩu để tạo mật khẩu.'
       });
     }
 
@@ -361,8 +365,8 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Vui lòng cung cấp đầy đủ email, mã xác nhận và mật khẩu mới' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    if (!newPassword || newPassword.length < 6 || newPassword.length > 30) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu mới phải từ 6 đến 30 ký tự' });
     }
 
     const cleanEmail = email.toLowerCase().trim();

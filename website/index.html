@@ -18,8 +18,6 @@
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
     <link rel="stylesheet" href="styles.css?v=apple-4.3">
-    <!-- Google Identity Services (Google OAuth 2.0) -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -750,21 +748,7 @@
                     <button type="button" class="auth-tab-btn" id="tab-btn-forgot">Quên Mật Khẩu</button>
                 </div>
 
-                <!-- Google OAuth Quick Button -->
-                <div class="google-auth-box">
-                                        <button type="button" class="btn-google-apple" id="btn-google-login">
-                        <svg class="google-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                        </svg>
-                        <span>Đăng nhập bằng Google</span>
-                    </button>
-                                    </div>
-
-                <div class="auth-divider"><span>HOẶC BẰNG EMAIL</span></div>
-
+                
                 <!-- Form 1: Đăng Nhập -->
                 <form id="form-login" class="auth-form-panel active">
                     <div class="auth-field">
@@ -773,7 +757,8 @@
                     </div>
                     <div class="auth-field">
                         <label for="login-password">Mật khẩu:</label>
-                        <input type="password" id="login-password" class="store-input" placeholder="••••••••" required autocomplete="current-password">
+                        <input type="password" id="login-password" class="store-input" placeholder="••••••••" required minlength="6" maxlength="30" autocomplete="current-password">
+                        <span class="auth-hint-small">Mật khẩu từ 6 đến 30 ký tự</span>
                     </div>
                     <button type="submit" class="btn btn-apple-primary btn-block" id="btn-submit-login">
                         <span>Đăng Nhập</span>
@@ -791,8 +776,9 @@
                         <input type="email" id="reg-email" class="store-input" placeholder="email@example.com" required autocomplete="email">
                     </div>
                     <div class="auth-field">
-                        <label for="reg-password">Mật khẩu (tối thiểu 6 ký tự):</label>
-                        <input type="password" id="reg-password" class="store-input" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+                        <label for="reg-password">Mật khẩu:</label>
+                        <input type="password" id="reg-password" class="store-input" placeholder="••••••••" required minlength="6" maxlength="30" autocomplete="new-password">
+                        <span class="auth-hint-small">Độ dài mật khẩu từ 6 đến 30 ký tự</span>
                     </div>
                     <button type="submit" class="btn btn-apple-primary btn-block" id="btn-submit-register">
                         <span>Tạo Tài Khoản Mới</span>
@@ -817,8 +803,9 @@
                             <input type="text" id="reset-code" class="store-input" placeholder="123456" maxlength="6">
                         </div>
                         <div class="auth-field">
-                            <label for="reset-new-password">Mật khẩu mới (tối thiểu 6 ký tự):</label>
-                            <input type="password" id="reset-new-password" class="store-input" placeholder="••••••••" minlength="6">
+                            <label for="reset-new-password">Mật khẩu mới:</label>
+                            <input type="password" id="reset-new-password" class="store-input" placeholder="••••••••" minlength="6" maxlength="30">
+                            <span class="auth-hint-small">Độ dài mật khẩu từ 6 đến 30 ký tự</span>
                         </div>
                         <button type="button" class="btn btn-apple-primary btn-block" id="btn-submit-new-password">
                             <span>Lưu Mật Khẩu Mới</span>
@@ -831,82 +818,6 @@
         </div>
     </div>
 
-    
-    <!-- 1b. Google Account Chooser Modal (Đăng nhập Google 1 chạm) -->
-    <div class="modal" id="google-chooser-modal" aria-hidden="true" role="dialog" aria-labelledby="google-chooser-title">
-        <div class="modal-overlay" id="google-chooser-overlay"></div>
-        <div class="modal-sheet modal-sheet-google">
-            <div class="modal-header google-chooser-header">
-                <div class="google-logo-wrapper">
-                    <svg viewBox="0 0 24 24" width="28" height="28">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                </div>
-                <div class="modal-header-text">
-                    <h3 id="google-chooser-title">Đăng nhập bằng Google</h3>
-                    <p class="modal-subtitle">Chọn tài khoản Google để tiếp tục với <strong>67B67T</strong></p>
-                </div>
-                <button type="button" class="modal-close" id="google-chooser-close" aria-label="Đóng">&times;</button>
-            </div>
-
-            <div class="modal-body google-chooser-body">
-                <div class="google-accounts-list">
-                    <!-- Tài khoản 1: Quản trị viên (Huy Phạm - phuy56688@gmail.com) -->
-                    <button type="button" class="google-acc-card" id="btn-choose-google-admin">
-                        <div class="google-acc-avatar">
-                            <img src="https://mc-heads.net/avatar/MHF_Steve/44" alt="Huy Phạm">
-                        </div>
-                        <div class="google-acc-details">
-                            <div class="google-acc-title">
-                                <span class="google-acc-name">Huy Phạm</span>
-                                <span class="badge-google-admin">Admin</span>
-                            </div>
-                            <span class="google-acc-email">phuy56688@gmail.com</span>
-                        </div>
-                        <div class="google-acc-action">
-                            <span class="google-login-action-btn">Đăng nhập</span>
-                        </div>
-                    </button>
-
-                    <!-- Tài khoản 2: Người chơi khác -->
-                    <button type="button" class="google-acc-card" id="btn-toggle-other-google">
-                        <div class="google-acc-avatar google-acc-avatar-other">
-                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
-                        </div>
-                        <div class="google-acc-details">
-                            <div class="google-acc-title">
-                                <span class="google-acc-name">Sử dụng tài khoản Google khác</span>
-                            </div>
-                            <span class="google-acc-email">Đăng nhập tài khoản người chơi (USER)</span>
-                        </div>
-                        <div class="google-acc-action">
-                            <span class="google-login-action-btn action-outline">Chọn</span>
-                        </div>
-                    </button>
-                </div>
-
-                <!-- Ô nhập Email Google tùy chọn -->
-                <div id="google-custom-box" class="google-custom-box" style="display: none;">
-                    <label for="google-input-custom-email">Nhập địa chỉ Gmail của bạn:</label>
-                    <div class="google-custom-input-group">
-                        <input type="email" id="google-input-custom-email" class="store-input" placeholder="ten_cua_ban@gmail.com" autocomplete="email">
-                        <button type="button" class="btn-apple-store" id="btn-submit-custom-google">Tiếp tục</button>
-                    </div>
-                </div>
-
-                <div class="google-chooser-notice">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    <span>Để tiếp tục, Google sẽ chia sẻ tên, email và ảnh đại diện của bạn với 67B67T theo Chính sách bảo mật.</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 2. Admin Dashboard Modal (Dành riêng cho phuy56688@gmail.com) -->
     <div class="modal" id="admin-modal" aria-hidden="true" role="dialog" aria-labelledby="admin-modal-title">
         <div class="modal-overlay" id="admin-modal-overlay"></div>
@@ -915,7 +826,7 @@
                 <div class="modal-header-text">
                     <span class="badge-modal-top">QUẢN TRỊ VIÊN 67B67T</span>
                     <h3 id="admin-modal-title">👑 Bảng Điều Khiển &amp; Duyệt Đơn Rank Plus</h3>
-                    <span class="admin-logged-email" id="admin-current-email">phuy56688@gmail.com</span>
+                    <span class="admin-logged-email" id="admin-current-email">Quản trị viên</span>
                 </div>
                 <button type="button" class="modal-close" id="admin-modal-close" aria-label="Đóng">&times;</button>
             </div>

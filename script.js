@@ -2348,7 +2348,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     actionBtns += '<span style="color: #ff453a; font-size: 0.82rem; font-weight: 600;">✖ Đã từ chối' + (ord.rejection_reason ? ': ' + ord.rejection_reason : '') + '</span>';
                 }
-                actionBtns += ' <button type="button" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);" title="Sao chép lệnh chạy trong Minecraft hoặc Console GachCloud" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px;">📋 Lệnh Game</button>';
+                actionBtns += ' <button type="button" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);" title="Sao chép lệnh" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px;">📋 Copy Lệnh</button>';
+                actionBtns += ' <a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã copy lệnh và mở Console df28479b! Nhấn Ctrl + V rồi Enter nhé!\', 4000);" title="Mở thẳng console df28479b" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px; text-decoration: none;">🚀 Mở Console df28479b</a>';
 
                 html += '<div class="admin-order-card">' +
                     '<div class="admin-order-header">' +
@@ -2427,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Các hàm duyệt & từ chối đơn hàng toàn cục cho Admin
     window.adminApproveOrder = async function(orderId) {
-        if (!confirm('Xác nhận DUYỆT đơn hàng #' + orderId + ' và gửi lệnh cấp Rank Plus ngay lập tức vào máy chủ Minecraft?')) {
+        if (!confirm('Xác nhận DUYỆT đơn hàng #' + orderId + ' và cấp Rank Plus vào máy chủ Minecraft?')) {
             return;
         }
 
@@ -2442,17 +2443,25 @@ document.addEventListener('DOMContentLoaded', () => {
             reviewed_at: new Date().toISOString()
         });
 
+        // 1. Tự động sao chép lệnh cấp rank vào bộ nhớ tạm (chuột)
+        try {
+            await navigator.clipboard.writeText('/setrankplus ' + username);
+        } catch (_) {}
+
         let commandDispatched = false;
         let dispatchMessage = '';
 
-        // 1. Ưu tiên: Bắn thẳng qua GachCloud API nếu đã cấu hình (100% tự động không cần console)
+        // 2. Bắn thẳng qua GachCloud API nếu đã cấu hình API Key
         const bridge = getGachcloudBridge();
-        if (bridge && bridge.serverId && bridge.apiKey) {
+        const serverId = (bridge && bridge.serverId) ? bridge.serverId : 'df28479b';
+        const apiKey = (bridge && bridge.apiKey) ? bridge.apiKey.trim() : '';
+
+        if (apiKey) {
             try {
-                const gcRes = await fetch('https://panel.gachcloud.net/api/client/servers/' + encodeURIComponent(bridge.serverId) + '/command', {
+                const gcRes = await fetch('https://panel.gachcloud.net/api/client/servers/' + encodeURIComponent(serverId) + '/command', {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer ' + bridge.apiKey,
+                        'Authorization': 'Bearer ' + apiKey,
                         'Content-Type': 'application/json',
                         'Accept': 'Application/vnd.pterodactyl.v1+json'
                     },
@@ -2461,46 +2470,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (gcRes.ok || gcRes.status === 204) {
                     commandDispatched = true;
-                    dispatchMessage = '🎉 ĐÃ CẤP THẲNG RANK PLUS CHO ' + username + ' VÀO SERVER THÀNH CÔNG! (Lệnh đã chạy trên GachCloud, khỏi cần vào console)';
+                    dispatchMessage = '🎉 ĐÃ BẮN LỆNH THẲNG VÀO CONSOLE GACHCLOUD (df28479b)! Rank Plus đã được cấp cho ' + username + ' thành công!';
                 }
             } catch (err) {
                 console.warn('[GachCloud API Delivery Error]', err);
             }
         }
 
-        // 2. Thử bắn qua RCON backend nếu API chưa cấu hình
-        if (!commandDispatched) {
-            const token = getAuthToken();
-            if (token) {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
-                    const res = await fetch(resolveApiUrl('/admin/orders/' + encodeURIComponent(orderId) + '/approve'), {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + token },
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.rcon_success) {
-                            commandDispatched = true;
-                            dispatchMessage = '🎉 ĐÃ CẤP RANK PLUS CHO ' + username + ' QUA RCON THÀNH CÔNG!';
-                        }
-                    }
-                } catch (_) {}
-            }
-        }
-
-        // Tự động sao chép lệnh cấp rank vào bộ nhớ tạm (dự phòng)
-        try {
-            await navigator.clipboard.writeText('/setrankplus ' + username);
-        } catch (_) {}
-
+        // 3. Hiển thị kết quả & hỗ trợ mở Console
         if (commandDispatched) {
             showAppleToast(dispatchMessage, 6000);
         } else {
-            showAppleToast('⚠️ ĐÃ DUYỆT ĐƠN TRÊN WEB (Chưa bắn lệnh vào game do chưa có API Key GachCloud) — Đã copy sẵn lệnh: /setrankplus ' + username, 8000);
+            // Tự động mở tab Console df28479b để admin chỉ việc Ctrl+V rồi Enter!
+            try {
+                window.open('https://panel.gachcloud.net/server/df28479b/console', '_blank');
+            } catch (_) {}
+            showAppleToast('📋 ĐÃ COPY LỆNH: /setrankplus ' + username + ' & MỞ CONSOLE df28479b! Nhấn chuột vào ô "Nhập lệnh..." rồi bấm Ctrl+V và Enter nhé!', 8000);
         }
         loadAdminDashboardData();
     };

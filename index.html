@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=8.8">
+    <link rel="stylesheet" href="styles.css?v=8.9">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -851,43 +851,44 @@
                     </div>
                 </div>
 
-                <!-- Minecraft Server RCON Bridge Status Bar -->
+                <!-- Minecraft Server RCON & GachCloud Bridge Status Bar -->
                 <div class="admin-server-bridge-bar" id="admin-server-bridge">
                     <div class="server-bridge-left">
-                        <span class="server-status-dot offline" id="rcon-status-dot"></span>
+                        <span class="server-status-dot" id="rcon-status-dot"></span>
                         <div class="server-bridge-meta">
-                            <strong>Kết nối máy chủ: <code class="mono-code" id="rcon-display-host">node1.gachcloud.net:25690</code></strong>
-                            <span id="rcon-status-text" class="server-bridge-sub">Đang kiểm tra kết nối RCON...</span>
+                            <strong>Máy chủ: <code class="mono-code" id="rcon-display-host">GachCloud (df28479b)</code></strong>
+                            <span id="rcon-status-text" class="server-bridge-sub">🟢 Sẵn sàng tự động bắn lệnh vào Console df28479b</span>
                         </div>
                     </div>
                     <div class="server-bridge-right">
-                        <button type="button" class="btn btn-sm btn-apple-subtle" id="btn-toggle-rcon-config">⚙️ Cấu Hình RCON</button>
+                        <a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn btn-sm btn-apple-subtle" style="margin-right: 6px; text-decoration: none;">🚀 Mở Console df28479b</a>
+                        <button type="button" class="btn btn-sm btn-apple-primary" id="btn-toggle-rcon-config">⚡ Bật Cấp Thẳng</button>
                     </div>
                 </div>
 
                 <!-- Collapsible RCON & GachCloud Direct Bridge Config Drawer -->
                 <div class="admin-rcon-config-box" id="admin-rcon-config-drawer" style="display: none;">
                     <div style="background: rgba(48, 209, 88, 0.08); border: 1px solid rgba(48, 209, 88, 0.25); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">
-                        <strong style="color: #30d158; display: block; margin-bottom: 3px;">⚡ CẤP THẲNG TỪ WEB VÀO GAME (KHÔNG CẦN VÀO CONSOLE):</strong>
-                        <span>Điền mã máy chủ GachCloud và API Key để mỗi khi bấm <strong>"Duyệt Đơn"</strong>, lệnh <code>/setrankplus &lt;tên&gt;</code> sẽ tự động bắn thẳng vào game server ngay tức thì!</span>
+                        <strong style="color: #30d158; display: block; margin-bottom: 3px;">⚡ BẮN LỆNH THẲNG VÀO CONSOLE GACHCLOUD (df28479b):</strong>
+                        <span>Điền API Key của GachCloud để mỗi khi bấm <strong>"Duyệt Đơn"</strong>, web sẽ tự động gửi lệnh <code>setrankplus &lt;tên&gt;</code> vào thẳng console của server <strong>df28479b</strong> ngay tức thì!</span>
                     </div>
 
                     <!-- GachCloud API Bridge Row -->
                     <div class="rcon-config-row" style="margin-bottom: 10px;">
-                        <div class="rcon-input-group" style="flex: 1.2; min-width: 170px;">
-                            <label for="gc-server-id">Mã Server GachCloud (hoặc Link URL):</label>
-                            <input type="text" id="gc-server-id" class="store-input" placeholder="VD: a1b2c3d4 (xem trên link panel)" style="padding: 6px 10px; font-size: 0.82rem;">
+                        <div class="rcon-input-group" style="flex: 1; min-width: 140px;">
+                            <label for="gc-server-id">Mã Server GachCloud:</label>
+                            <input type="text" id="gc-server-id" class="store-input" value="df28479b" style="padding: 6px 10px; font-size: 0.82rem; font-weight: bold; color: #2997ff;">
                         </div>
-                        <div class="rcon-input-group" style="flex: 2; min-width: 200px;">
-                            <label for="gc-api-key">GachCloud API Key (Mã kết nối API):</label>
-                            <input type="password" id="gc-api-key" class="store-input" placeholder="ptlc_... (Tài khoản -> API Credentials)" style="padding: 6px 10px; font-size: 0.82rem;">
+                        <div class="rcon-input-group" style="flex: 2.2; min-width: 220px;">
+                            <label for="gc-api-key">GachCloud API Key: <a href="https://panel.gachcloud.net/account/api" target="_blank" style="color: #2997ff; font-weight: normal; margin-left: 6px; text-decoration: underline;">👉 Bấm vào đây để lấy mã (10 giây)</a></label>
+                            <input type="password" id="gc-api-key" class="store-input" placeholder="Dán mã ptlc_... vào đây" style="padding: 6px 10px; font-size: 0.82rem;">
                         </div>
                         <div class="rcon-actions">
                             <button type="button" class="btn btn-apple-primary" id="btn-save-gachcloud-bridge" style="padding: 7px 14px; font-size: 0.82rem;">Lưu &amp; Bật Cấp Thẳng</button>
                         </div>
                     </div>
                     <div style="font-size: 0.77rem; color: var(--text-tertiary); margin-bottom: 12px; line-height: 1.45;">
-                        💡 <strong>Cách lấy trong 30 giây:</strong> Vào <code>panel.gachcloud.net</code> &rarr; Xem link web có dạng <code>.../server/<strong>[MÃ_SERVER]</strong></code> &rarr; Bấm Avatar góc phải &rarr; <strong>Account (Tài khoản)</strong> &rarr; <strong>API Credentials</strong> &rarr; Bấm <em>Create</em> để lấy mã dán vào đây.
+                        💡 <strong>Cách lấy API Key:</strong> Nhấn vào link <a href="https://panel.gachcloud.net/account/api" target="_blank" style="color: #2997ff;">panel.gachcloud.net/account/api</a> &rarr; Bấm nút <strong>Create New</strong> &rarr; Đặt tên <code>web</code> &rarr; Bấm Create rồi copy mã dán vào ô trên.
                     </div>
 
                     <!-- RCON Backup Row -->
@@ -1022,6 +1023,6 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=8.8"></script>
+    <script src="script.js?v=8.9"></script>
 </body>
 </html>

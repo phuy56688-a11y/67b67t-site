@@ -1157,6 +1157,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Hệ Thống Xác Thực & Quản Lý Tài Khoản (Đa Môi Trường: Cục Bộ + Máy Chủ) ---
+    const LOCAL_USERS_KEY = '67b67t_users_db_v6';
+
+    function getLocalUsers() {
+        try {
+            return JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function saveLocalUsers(list) {
+        try {
+            localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(list));
+        } catch (_) {}
+    }
+
     // Kiểm tra phiên đăng nhập từ máy chủ khi load trang
     async function checkServerSession() {
         const token = getAuthToken();
@@ -1164,24 +1181,44 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAuthUI(null);
             return;
         }
+
+        // Phiên đăng nhập nội bộ (bắt đầu bằng token_) luôn được duy trì mượt mà
+        if (token.startsWith('token_') || token.startsWith('jwt_')) {
+            const cachedUser = getCurrentUser();
+            if (cachedUser) {
+                updateAuthUI(cachedUser);
+                return;
+            }
+        }
+
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1800);
             const res = await fetch(resolveApiUrl('/auth/me'), {
-                headers: { 'Authorization': 'Bearer ' + token }
+                headers: { 'Authorization': 'Bearer ' + token },
+                signal: controller.signal
             });
-            const data = await res.json();
-            if (res.ok && data.success && data.user) {
-                setAuthSession(token, data.user);
-            } else {
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.success && data.user) {
+                    setAuthSession(token, data.user);
+                    return;
+                }
+            }
+            if (res.status === 401) {
                 clearAuthSession();
+            } else {
+                updateAuthUI(getCurrentUser());
             }
         } catch (_) {
-            // Giữ phiên cache nếu mất mạng tạm thời
             updateAuthUI(getCurrentUser());
         }
     }
     checkServerSession();
 
-    // --- Xử Lý Tabs Trong Auth Modal ---
+    // --- Tabs Trong Auth Modal ---
     const tabBtnLogin = document.getElementById('tab-btn-login');
     const tabBtnRegister = document.getElementById('tab-btn-register');
     const tabBtnForgot = document.getElementById('tab-btn-forgot');
@@ -1215,160 +1252,238 @@ document.addEventListener('DOMContentLoaded', () => {
         authAlertBox.className = 'auth-alert ' + (isSuccess ? 'alert-success' : 'alert-error');
         authAlertBox.textContent = msg;
         authAlertBox.style.display = 'block';
-    }
-
-    // --- Quản Lý Tài Khoản (Backend API + Offline Fallback Liền Mạch) ---
-    const LOCAL_USERS_KEY = '67b67t_local_users_store';
-    function getLocalUsers() {
-        try {
-            return JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
-        } catch (_) {
-            return [];
+        // Hiển thị thêm Toast để người dùng luôn thấy ngay cả khi đang cuộn trang
+        if (!isSuccess) {
+            showAppleToast('⚠️ ' + msg, 2500);
         }
     }
-    function saveLocalUsers(list) {
-        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(list));
-    }
 
-    // Xử lý Đăng Nhập Email/Password
-    if (formLogin) {
-        formLogin.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            const btnSubmit = document.getElementById('btn-submit-login');
+    // --- Hàm Đăng Nhập Hoàn Chỉnh ---
+    async function executeLogin(e) {
+        if (e) e.preventDefault();
+        const emailInput = document.getElementById('login-email');
+        const passInput = document.getElementById('login-password');
+        const btnSubmit = document.getElementById('btn-submit-login');
 
-            if (!email || !password) return showAuthAlert('Vui lòng điền đầy đủ email và mật khẩu');
-            if (password.length < 6 || password.length > 30) {
-                return showAuthAlert('Mật khẩu phải từ 6 đến 30 ký tự');
-            }
-            if (btnSubmit) btnSubmit.disabled = true;
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        const password = passInput ? passInput.value : '';
 
-            try {
-                const res = await fetch(resolveApiUrl('/auth/login'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+        if (!email) return showAuthAlert('Vui lòng nhập địa chỉ email');
+        if (!email.includes('@') || !email.includes('.')) return showAuthAlert('Địa chỉ email không đúng định dạng');
+        if (!password) return showAuthAlert('Vui lòng nhập mật khẩu');
+        if (password.length < 6 || password.length > 30) {
+            return showAuthAlert('Mật khẩu phải từ 6 đến 30 ký tự');
+        }
+
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span>Đang xác thực...</span>';
+        }
+
+        const isAdmin = (email === 'phuy56688@gmail.com');
+        let isSuccess = false;
+
+        // 1. Thử gửi lên máy chủ Backend nếu có
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+            const res = await fetch(resolveApiUrl('/auth/login'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
                 const data = await res.json();
-                if (!res.ok || !data.success) {
-                    showAuthAlert(data.message || 'Đăng nhập thất bại');
-                    return;
+                if (data && data.success) {
+                    setAuthSession(data.token, data.user);
+                    isSuccess = true;
                 }
-                setAuthSession(data.token, data.user);
-                closeModal(authModal);
-                showAppleToast('✦ Đăng nhập thành công! ✦', 2500);
-                return;
-            } catch (netErr) {
-                console.warn('[Auth] Máy chủ chưa kết nối, sử dụng phiên dự phòng:', netErr);
-                // Fallback cục bộ mượt mà
-                const cleanEmail = email.toLowerCase().trim();
-                const users = getLocalUsers();
-                const matched = users.find(u => u.email === cleanEmail);
-
-                // Nếu là tài khoản Admin phuy56688@gmail.com
-                if (cleanEmail === 'phuy56688@gmail.com') {
-                    const adminObj = matched || {
-                        id: 1,
-                        email: 'phuy56688@gmail.com',
-                        name: 'Quản trị viên',
-                        role: 'ADMIN',
-                        password: password,
-                        avatar: 'https://mc-heads.net/avatar/MHF_Steve/64'
-                    };
-                    if (!matched) {
-                        users.push(adminObj);
-                        saveLocalUsers(users);
-                    } else if (matched.password !== password) {
-                        matched.password = password;
-                        saveLocalUsers(users);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                if (data && data.message) {
+                    showAuthAlert(data.message);
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<span>Đăng Nhập</span>';
                     }
-                    const mockToken = 'jwt_adm_' + Date.now();
-                    setAuthSession(mockToken, adminObj);
-                    closeModal(authModal);
-                    showAppleToast('👑 Đăng nhập thành công! Quyền: Quản trị viên', 3000);
                     return;
                 }
-
-                if (!matched || matched.password !== password) {
-                    showAuthAlert('Email hoặc mật khẩu không chính xác');
-                    return;
-                }
-
-                const mockToken = 'jwt_usr_' + Date.now();
-                setAuthSession(mockToken, matched);
-                closeModal(authModal);
-                showAppleToast('✦ Đăng nhập thành công! ✦', 2500);
-            } finally {
-                if (btnSubmit) btnSubmit.disabled = false;
             }
-        });
-    }
+        } catch (_) {
+            // Máy chủ offline hoặc môi trường tĩnh
+        }
 
-    // Xử lý Đăng Ký Tài Khoản
-    if (formRegister) {
-        formRegister.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('reg-name').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const btnSubmit = document.getElementById('btn-submit-register');
+        // 2. Chế độ cục bộ dự phòng nếu backend không kết nối
+        if (!isSuccess) {
+            const users = getLocalUsers();
+            let matched = users.find(u => u.email === email);
 
-            if (!email) return showAuthAlert('Vui lòng nhập địa chỉ email hợp lệ');
-            if (!password || password.length < 6 || password.length > 30) {
-                return showAuthAlert('Mật khẩu phải từ 6 đến 30 ký tự');
-            }
-            if (btnSubmit) btnSubmit.disabled = true;
-
-            try {
-                const res = await fetch(resolveApiUrl('/auth/register'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
-                });
-                const data = await res.json();
-                if (!res.ok || !data.success) {
-                    showAuthAlert(data.message || 'Đăng ký thất bại');
-                    return;
-                }
-                setAuthSession(data.token, data.user);
-                closeModal(authModal);
-                showAppleToast('✦ Tạo tài khoản thành công! ✦', 2500);
-                return;
-            } catch (netErr) {
-                console.warn('[Register] Máy chủ chưa kết nối, lưu tài khoản dự phòng:', netErr);
-                // Fallback cục bộ: Đảm bảo không bao giờ bị nghẽn
-                const cleanEmail = email.toLowerCase().trim();
-                const users = getLocalUsers();
-                const existing = users.find(u => u.email === cleanEmail);
-                if (existing) {
-                    showAuthAlert('Email này đã được đăng ký tài khoản. Vui lòng chuyển sang Đăng Nhập.');
-                    return;
-                }
-
-                const isAdmin = cleanEmail === 'phuy56688@gmail.com';
-                const newUser = {
-                    id: users.length + 1,
-                    email: cleanEmail,
-                    name: name || cleanEmail.split('@')[0],
+            if (isAdmin) {
+                // Tự động nhận diện tài khoản Admin tuyệt đối
+                matched = matched || {
+                    id: 1,
+                    email: 'phuy56688@gmail.com',
+                    name: 'Huy Phạm',
+                    role: 'ADMIN',
                     password: password,
-                    role: isAdmin ? 'ADMIN' : 'USER',
                     avatar: 'https://mc-heads.net/avatar/MHF_Steve/64'
                 };
-                users.push(newUser);
-                saveLocalUsers(users);
-
-                const mockToken = (isAdmin ? 'jwt_adm_' : 'jwt_usr_') + Date.now();
-                setAuthSession(mockToken, newUser);
-                closeModal(authModal);
-                showAppleToast(isAdmin ? '👑 Tạo tài khoản Quản trị viên thành công!' : '✦ Tạo tài khoản thành công! ✦', 3000);
-            } finally {
-                if (btnSubmit) btnSubmit.disabled = false;
+                matched.password = password;
+                matched.role = 'ADMIN';
+                if (!users.some(u => u.email === email)) {
+                    users.push(matched);
+                    saveLocalUsers(users);
+                }
+                const mockToken = 'token_adm_' + Date.now();
+                setAuthSession(mockToken, matched);
+                isSuccess = true;
+            } else {
+                if (!matched || matched.password !== password) {
+                    showAuthAlert('Email hoặc mật khẩu không chính xác');
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<span>Đăng Nhập</span>';
+                    }
+                    return;
+                }
+                const mockToken = 'token_usr_' + Date.now();
+                setAuthSession(mockToken, matched);
+                isSuccess = true;
             }
-        });
+        }
+
+        closeModal(authModal);
+        const welcomeMsg = isAdmin ? '👑 Đăng nhập Quản trị viên thành công!' : '✦ Đăng nhập thành công! ✦';
+        showAppleToast(welcomeMsg, 3000);
+
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<span>Đăng Nhập</span>';
+        }
     }
 
-    // Xử lý Quên Mật Khẩu
+    if (formLogin) formLogin.addEventListener('submit', executeLogin);
+    const btnSubmitLogin = document.getElementById('btn-submit-login');
+    if (btnSubmitLogin) btnSubmitLogin.addEventListener('click', executeLogin);
+
+    // --- Hàm Đăng Ký Hoàn Chỉnh ---
+    async function executeRegister(e) {
+        if (e) e.preventDefault();
+        const nameInput = document.getElementById('reg-name');
+        const emailInput = document.getElementById('reg-email');
+        const passInput = document.getElementById('reg-password');
+        const btnSubmit = document.getElementById('btn-submit-register');
+
+        const name = nameInput ? nameInput.value.trim() : '';
+        const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
+        const password = passInput ? passInput.value : '';
+
+        if (!email) return showAuthAlert('Vui lòng nhập địa chỉ email của bạn');
+        if (!email.includes('@') || !email.includes('.')) {
+            return showAuthAlert('Địa chỉ email không đúng định dạng (ví dụ: email@gmail.com)');
+        }
+        if (!password || password.length < 6 || password.length > 30) {
+            return showAuthAlert('Mật khẩu phải từ 6 đến 30 ký tự (Hiện có: ' + (password ? password.length : 0) + ' ký tự)');
+        }
+
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span>Đang tạo tài khoản...</span>';
+        }
+
+        const isAdmin = (email === 'phuy56688@gmail.com');
+        const displayName = name || (isAdmin ? 'Huy Phạm' : email.split('@')[0]);
+
+        const newUser = {
+            id: 'u_' + Date.now(),
+            email: email,
+            name: displayName,
+            role: isAdmin ? 'ADMIN' : 'USER',
+            password: password,
+            avatar: 'https://mc-heads.net/avatar/MHF_Steve/64'
+        };
+
+        let isRegistered = false;
+
+        // 1. Thử gửi lên máy chủ backend
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+            const res = await fetch(resolveApiUrl('/auth/register'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: displayName, email: email, password: password }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.success) {
+                    newUser.id = data.user.id;
+                    newUser.role = data.user.role;
+                    isRegistered = true;
+                    setAuthSession(data.token, data.user);
+                }
+            } else if (res.status === 409) {
+                showAuthAlert('Email này đã được đăng ký. Vui lòng chuyển sang tab Đăng Nhập.');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = '<span>Tạo Tài Khoản Mới</span>';
+                }
+                return;
+            }
+        } catch (_) {
+            // Máy chủ chưa chạy hoặc tĩnh
+        }
+
+        // 2. Lưu tài khoản cục bộ đảm bảo luôn thành công
+        if (!isRegistered) {
+            const localUsers = getLocalUsers();
+            const existingIdx = localUsers.findIndex(u => u.email === email);
+            if (existingIdx !== -1) {
+                if (isAdmin) {
+                    localUsers[existingIdx].password = password;
+                    localUsers[existingIdx].role = 'ADMIN';
+                } else {
+                    showAuthAlert('Email này đã được đăng ký. Vui lòng chuyển sang tab Đăng Nhập.');
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<span>Tạo Tài Khoản Mới</span>';
+                    }
+                    return;
+                }
+            } else {
+                localUsers.push(newUser);
+            }
+            saveLocalUsers(localUsers);
+
+            const mockToken = (isAdmin ? 'token_adm_' : 'token_usr_') + Date.now();
+            setAuthSession(mockToken, newUser);
+        }
+
+        closeModal(authModal);
+        const successMsg = isAdmin
+            ? '👑 Tạo tài khoản Quản trị viên thành công! Chào mừng Huy Phạm'
+            : '✦ Tạo tài khoản thành công! Chào mừng ' + displayName + ' ✦';
+        showAppleToast(successMsg, 3500);
+
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<span>Tạo Tài Khoản Mới</span>';
+        }
+    }
+
+    if (formRegister) formRegister.addEventListener('submit', executeRegister);
+    const btnSubmitRegister = document.getElementById('btn-submit-register');
+    if (btnSubmitRegister) btnSubmitRegister.addEventListener('click', executeRegister);
+
+    // --- Quên Mật Khẩu ---
     const btnSendResetCode = document.getElementById('btn-send-reset-code');
     const forgotStep1 = document.getElementById('forgot-step-1');
     const forgotStep2 = document.getElementById('forgot-step-2');
@@ -1376,7 +1491,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSendResetCode) {
         btnSendResetCode.addEventListener('click', async () => {
-            const email = document.getElementById('forgot-email').value.trim();
+            const emailInput = document.getElementById('forgot-email');
+            const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
             if (!email) return showAuthAlert('Vui lòng nhập địa chỉ email');
 
             btnSendResetCode.disabled = true;
@@ -1387,14 +1503,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ email })
                 });
                 const data = await res.json();
-                showAuthAlert(data.message + (data.reset_code_dev ? ' (Mã test: ' + data.reset_code_dev + ')' : ''), true);
+                showAuthAlert(data.message + (data.reset_code_dev ? ' (Mã: ' + data.reset_code_dev + ')' : ''), true);
                 if (forgotStep1) forgotStep1.style.display = 'none';
                 if (forgotStep2) forgotStep2.style.display = 'block';
-            } catch (err) {
-                // Fallback cục bộ
+            } catch (_) {
                 const mockCode = String(Math.floor(100000 + Math.random() * 900000));
-                localStorage.setItem('local_reset_' + email.toLowerCase().trim(), mockCode);
-                showAuthAlert('Mã xác nhận khôi phục: ' + mockCode, true);
+                localStorage.setItem('local_reset_' + email, mockCode);
+                showAuthAlert('Mã xác nhận khôi phục của bạn là: ' + mockCode, true);
                 if (forgotStep1) forgotStep1.style.display = 'none';
                 if (forgotStep2) forgotStep2.style.display = 'block';
                 const codeInput = document.getElementById('reset-code');
@@ -1407,9 +1522,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnSubmitNewPassword) {
         btnSubmitNewPassword.addEventListener('click', async () => {
-            const email = document.getElementById('forgot-email').value.trim();
-            const code = document.getElementById('reset-code').value.trim();
-            const newPassword = document.getElementById('reset-new-password').value;
+            const email = (document.getElementById('forgot-email')?.value || '').trim().toLowerCase();
+            const code = (document.getElementById('reset-code')?.value || '').trim();
+            const newPassword = document.getElementById('reset-new-password')?.value || '';
 
             if (!code || !newPassword || newPassword.length < 6 || newPassword.length > 30) {
                 return showAuthAlert('Vui lòng nhập mã xác nhận và mật khẩu mới từ 6 đến 30 ký tự');
@@ -1427,14 +1542,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 showAuthAlert(data.message, true);
-                setTimeout(() => switchAuthTab('login'), 1800);
-            } catch (err) {
-                // Fallback cục bộ
-                const cleanEmail = email.toLowerCase().trim();
-                const savedCode = localStorage.getItem('local_reset_' + cleanEmail);
+                setTimeout(() => switchAuthTab('login'), 1500);
+            } catch (_) {
+                const savedCode = localStorage.getItem('local_reset_' + email);
                 if (savedCode && savedCode === code) {
                     const users = getLocalUsers();
-                    const u = users.find(x => x.email === cleanEmail);
+                    const u = users.find(x => x.email === email);
                     if (u) {
                         u.password = newPassword;
                         saveLocalUsers(users);
@@ -1450,6 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    
     // --- Cửa Hàng Rank Plus (Giá Mới: 5.000 VNĐ - Giảm 90%) ---
 
     const storeUsernameInput = document.getElementById('store-mc-username');

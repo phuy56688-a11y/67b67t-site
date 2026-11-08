@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=5.5">
+    <link rel="stylesheet" href="styles.css?v=7.0">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -750,7 +750,7 @@
 
                 
                 <!-- Form 1: Đăng Nhập -->
-                <form id="form-login" class="auth-form-panel active">
+                <form id="form-login" class="auth-form-panel active" novalidate>
                     <div class="auth-field">
                         <label for="login-email">Địa chỉ Email:</label>
                         <input type="email" id="login-email" class="store-input" placeholder="email@example.com" required autocomplete="email">
@@ -766,7 +766,7 @@
                 </form>
 
                 <!-- Form 2: Đăng Ký -->
-                <form id="form-register" class="auth-form-panel">
+                <form id="form-register" class="auth-form-panel" novalidate>
                     <div class="auth-field">
                         <label for="reg-name">Tên hiển thị:</label>
                         <input type="text" id="reg-name" class="store-input" placeholder="Ví dụ: Huy Pham, Steve..." autocomplete="name">
@@ -786,7 +786,7 @@
                 </form>
 
                 <!-- Form 3: Quên Mật Khẩu -->
-                <form id="form-forgot" class="auth-form-panel">
+                <form id="form-forgot" class="auth-form-panel" novalidate>
                     <div id="forgot-step-1">
                         <div class="auth-field">
                             <label for="forgot-email">Email tài khoản cần khôi phục:</label>
@@ -960,6 +960,6 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=5.5"></script>
+    <script src="script.js?v=7.0"></script>
 </body>
 </html>

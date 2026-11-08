@@ -107,6 +107,12 @@ app.use('/api/*', (req, res) => {
     res.status(404).json({ success: false, message: 'Endpoint không tồn tại' });
 });
 
+// Phục vụ giao diện website tĩnh trực tiếp trên cùng cổng Port 5000
+app.use(express.static(path.join(__dirname, '..')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../index.html'));
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('[Unhandled Server Error]', err);

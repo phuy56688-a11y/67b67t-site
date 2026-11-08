@@ -42,6 +42,9 @@ async function createOrder(username, userId = null, buyerEmail = null) {
 
   // Nếu ZaloPay Merchant chưa cấu hình: Sử dụng quy trình thanh toán thủ công & duyệt đơn
   if (!config.isZaloPayConfigured()) {
+    const randomCode = Math.floor(Math.random() * 670) + 1;
+    const transferContent = `${randomCode}-${cleanUsername}`;
+
     return {
       orderId,
       username: cleanUsername,
@@ -53,8 +56,8 @@ async function createOrder(username, userId = null, buyerEmail = null) {
         bankName: config.manualPayment.bankName,
         accountNo: config.manualPayment.accountNo,
         accountName: config.manualPayment.accountName,
-        transferContent: `67B67T ${orderId}`,
-        qrUrl: manualQrUrl
+        transferContent: transferContent,
+        qrUrl: 'assets/qr-payment.png'
       },
       status: 'PENDING',
       message: 'Vui lòng quét mã QR chuyển khoản 5.000đ và gửi biên lai để quản trị viên kiểm tra.'

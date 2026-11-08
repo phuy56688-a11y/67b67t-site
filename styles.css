@@ -844,6 +844,10 @@ body.loading {
     gap: 2rem;
 }
 
+.bento-card-full {
+    grid-column: 1 / -1;
+}
+
 .card-tag {
     font-size: 0.75rem;
     font-weight: 600;

@@ -1046,10 +1046,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (checkoutModalOverlay) checkoutModalOverlay.addEventListener('click', () => {
         closeModal(checkoutModal);
         stopOrderPolling();
+        if (typeof stopCheckoutTimer === 'function') stopCheckoutTimer();
     });
     if (checkoutModalClose) checkoutModalClose.addEventListener('click', () => {
         closeModal(checkoutModal);
         stopOrderPolling();
+        if (typeof stopCheckoutTimer === 'function') stopCheckoutTimer();
     });
     if (lookupModalOverlay) lookupModalOverlay.addEventListener('click', () => closeModal(lookupModal));
     if (lookupModalClose) lookupModalClose.addEventListener('click', () => closeModal(lookupModal));
@@ -1719,7 +1721,63 @@ document.addEventListener('DOMContentLoaded', () => {
             '</div>';
     }
 
-    // Render quy trình thanh toán thủ công 5.000 VNĐ + QR Image + Nội dung CK random
+    // --- Quản Lý Đồng Hồ Đếm Ngược 15 Phút Hết Hạn Đơn Hàng ---
+    let checkoutCountdownTimer = null;
+    function stopCheckoutTimer() {
+        if (checkoutCountdownTimer) {
+            clearInterval(checkoutCountdownTimer);
+            checkoutCountdownTimer = null;
+        }
+    }
+
+    function startCheckoutTimer(seconds = 900) {
+        stopCheckoutTimer();
+        let timeLeft = seconds;
+        const timerDisplay = document.getElementById('checkout-timer');
+        const update = () => {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            if (timerDisplay) {
+                timerDisplay.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                if (timeLeft <= 180) {
+                    timerDisplay.style.color = '#ff453a';
+                } else {
+                    timerDisplay.style.color = '#ffb340';
+                }
+            }
+        };
+        update();
+        checkoutCountdownTimer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                stopCheckoutTimer();
+                if (timerDisplay) {
+                    timerDisplay.textContent = '00:00 (Hết Hạn)';
+                    timerDisplay.style.color = '#ff453a';
+                }
+                const btnSubmit = document.getElementById('btn-send-receipt');
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.style.opacity = '0.5';
+                    btnSubmit.style.cursor = 'not-allowed';
+                }
+                const statusDiv = document.getElementById('checkout-dynamic-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = '<div style="background: rgba(255, 69, 58, 0.12); border: 1.5px solid rgba(255, 69, 58, 0.4); border-radius: 10px; padding: 12px; text-align: center; margin-top: 10px;">' +
+                        '<strong style="color: #ff6961; display: block; font-size: 0.9rem; margin-bottom: 4px;">⚠️ ĐƠN HÀNG ĐÃ HẾT HẠN (15 PHÚT)</strong>' +
+                        '<p style="color: #dfdfe2; font-size: 0.8rem; margin-bottom: 8px;">Đã quá thời gian 15 phút giữ phiên thanh toán. Vui lòng tạo đơn mới để tiếp tục.</p>' +
+                        '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click(); document.getElementById(\'btn-open-checkout\').click();">' +
+                        '<span>Tạo Lại Đơn Mới</span>' +
+                        '</button>' +
+                        '</div>';
+                }
+            } else {
+                update();
+            }
+        }, 1000);
+    }
+
+    // Render quy trình thanh toán thủ công 5.000 VNĐ + QR Image + Nội dung CK random + Đồng hồ 15 phút
     function renderManualCheckoutView(orderData, username, customTransferContent) {
         const orderId = orderData.order_id;
         const amount = orderData.amount || 5000;
@@ -1735,23 +1793,28 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         let html = '<div class="checkout-order-summary">' +
-            '<img src="https://mc-heads.net/avatar/' + encodeURIComponent(username) + '/52" alt="' + username + '" class="checkout-avatar" onerror="this.src=\'https://mc-heads.net/avatar/MHF_Steve/52\'">' +
+            '<img src="https://mc-heads.net/avatar/' + encodeURIComponent(username) + '/44" alt="' + username + '" class="checkout-avatar" onerror="this.src=\'https://mc-heads.net/avatar/MHF_Steve/44\'">' +
             '<div class="checkout-meta">' +
             '<strong>' + username + ' &bull; Rank Plus</strong>' +
             '<div class="checkout-order-id">Mã đơn: ' + orderId + '</div>' +
-            '<div class="checkout-amount"><del style="color: var(--text-tertiary); font-size: 0.88rem; margin-right: 6px;">' + oldAmount.toLocaleString('vi-VN') + ' đ</del> <span style="color: #30d158; font-weight: 800;">' + amount.toLocaleString('vi-VN') + ' VNĐ</span> <span class="badge-tag-discount">-90%</span></div>' +
+            '<div class="checkout-amount"><del style="color: var(--text-tertiary); font-size: 0.82rem; margin-right: 4px;">' + oldAmount.toLocaleString('vi-VN') + ' đ</del> <span style="color: #30d158; font-weight: 800; font-size: 0.95rem;">' + amount.toLocaleString('vi-VN') + ' VNĐ</span> <span class="badge-tag-discount">-90%</span></div>' +
             '</div>' +
             '</div>';
 
+        html += '<div class="checkout-countdown-bar" id="checkout-countdown-bar">' +
+            '<span>⏳ Đơn hàng hết hạn sau:</span>' +
+            '<span id="checkout-timer" class="checkout-timer-digits">15:00</span>' +
+            '</div>';
+
         html += '<div class="manual-payment-box">' +
-            '<div style="text-align: center; margin-bottom: 14px;">' +
-            '<span style="font-size: 0.82rem; font-weight: 700; color: #ff9f0a; letter-spacing: 0.06em; text-transform: uppercase;">BƯỚC 1: QUÉT MÃ QR & CHUYỂN KHOẢN 5.000 VNĐ</span>' +
+            '<div style="text-align: center; margin-bottom: 8px;">' +
+            '<span style="font-size: 0.76rem; font-weight: 700; color: #ff9f0a; letter-spacing: 0.04em; text-transform: uppercase;">BƯỚC 1: QUÉT MÃ QR & CHUYỂN KHOẢN 5.000 VNĐ</span>' +
             '</div>' +
-            '<div style="text-align: center; margin-bottom: 16px;">' +
-            '<div class="payment-qr-frame" style="display: inline-block; padding: 10px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">' +
-            '<img src="' + manual.qrUrl + '" alt="QR Thanh toán Rank Plus" style="width: 210px; height: 210px; display: block; border-radius: 8px; object-fit: contain;">' +
+            '<div style="text-align: center; margin-bottom: 10px;">' +
+            '<div class="payment-qr-frame" style="display: inline-block; padding: 6px; background: #ffffff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.35);">' +
+            '<img src="' + manual.qrUrl + '" alt="QR Thanh toán Rank Plus" style="width: 160px; height: 160px; display: block; border-radius: 6px; object-fit: contain;">' +
             '</div>' +
-            '<p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 8px;">Quét mã QR bằng App Ngân Hàng, ZaloPay hoặc MoMo</p>' +
+            '<p style="font-size: 0.74rem; color: var(--text-tertiary); margin-top: 4px; margin-bottom: 6px;">Quét mã QR bằng App Ngân Hàng, ZaloPay hoặc MoMo</p>' +
             '</div>' +
             '<div class="manual-bank-row">' +
             '<span>Ngân hàng:</span><span class="bank-val">' + manual.bankName + '</span>' +
@@ -1764,36 +1827,39 @@ document.addEventListener('DOMContentLoaded', () => {
             '<span>Chủ tài khoản:</span><span class="bank-val">' + manual.accountName + '</span>' +
             '</div>' +
             '<div class="manual-bank-row">' +
-            '<span>Số tiền:</span><span class="bank-val" style="color: #30d158; font-weight: 800; font-size: 1.05rem;">5.000 VNĐ</span>' +
+            '<span>Số tiền:</span><span class="bank-val" style="color: #30d158; font-weight: 800; font-size: 0.98rem;">5.000 VNĐ</span>' +
             '</div>' +
-            '<div class="manual-bank-row" style="background: rgba(41, 151, 255, 0.12); border: 1.5px solid rgba(41, 151, 255, 0.4); border-radius: 12px; padding: 12px 14px; margin-top: 10px;">' +
-            '<span style="font-weight: 700; color: #ffffff;">Nội dung CK:</span>' +
-            '<div><span class="bank-val" style="color: #2997ff; font-weight: 800; font-size: 1.15rem; letter-spacing: 0.5px;">' + manual.transferContent + '</span><button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + manual.transferContent + '\'); showAppleToast(\'Đã sao chép nội dung: ' + manual.transferContent + '\', 2500);" style="margin-left: 8px;">Sao Chép</button></div>' +
+            '<div class="manual-bank-row" style="background: rgba(41, 151, 255, 0.12); border: 1.2px solid rgba(41, 151, 255, 0.4); border-radius: 10px; padding: 8px 12px; margin-top: 8px;">' +
+            '<span style="font-weight: 700; color: #ffffff; font-size: 0.85rem;">Nội dung CK:</span>' +
+            '<div><span class="bank-val" style="color: #2997ff; font-weight: 800; font-size: 1.05rem; letter-spacing: 0.5px;">' + manual.transferContent + '</span><button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + manual.transferContent + '\'); showAppleToast(\'Đã sao chép nội dung: ' + manual.transferContent + '\', 2500);" style="margin-left: 8px;">Sao Chép</button></div>' +
             '</div>' +
-            '<p style="font-size: 0.78rem; color: #ff9f0a; margin-top: 6px; text-align: center;">⚠️ Bắt buộc ghi đúng nội dung <strong>' + manual.transferContent + '</strong> khi chuyển tiền để Admin duyệt đúng nhân vật Minecraft của bạn.</p>' +
+            '<p style="font-size: 0.74rem; color: #ff9f0a; margin-top: 5px; margin-bottom: 0; text-align: center;">⚠️ Bắt buộc ghi đúng nội dung <strong>' + manual.transferContent + '</strong> để Admin duyệt đúng nhân vật.</p>' +
             '</div>';
 
         // Form BƯỚC 2: Gửi biên lai
         html += '<form id="form-submit-receipt" class="receipt-upload-form">' +
-            '<h5>BƯỚC 2: GỬI BIÊN LAI XÁC NHẬN CHO ADMIN</h5>' +
-            '<p>Sau khi chuyển khoản 5.000đ với nội dung <strong>' + manual.transferContent + '</strong>, vui lòng tải ảnh chụp màn hình hoặc nhập mã giao dịch để Admin kiểm tra và duyệt rank.</p>' +
-            '<div class="file-input-wrap">' +
-            '<label for="receipt-file-input" class="custom-file-upload" id="receipt-file-label">' +
-            '📷 Nhấp để tải ảnh biên lai (PNG, JPG)' +
+            '<h5 style="margin-bottom: 4px; font-size: 0.85rem;">BƯỚC 2: GỬI BIÊN LAI XÁC NHẬN CHO ADMIN</h5>' +
+            '<p style="font-size: 0.76rem; margin-bottom: 8px;">Sau khi chuyển khoản 5.000đ với nội dung <strong>' + manual.transferContent + '</strong>, vui lòng tải ảnh biên lai hoặc nhập mã giao dịch để Admin kiểm tra và duyệt rank.</p>' +
+            '<div class="file-input-wrap" style="margin-bottom: 8px;">' +
+            '<label for="receipt-file-input" class="custom-file-upload" id="receipt-file-label" style="padding: 7px 10px; font-size: 0.8rem;">' +
+            '📷 Tải ảnh biên lai (PNG, JPG)' +
             '</label>' +
             '<input type="file" id="receipt-file-input" accept="image/*" style="display: none;">' +
             '</div>' +
-            '<div style="margin-bottom: 14px;">' +
-            '<input type="text" id="receipt-note-input" class="store-input" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; width: 100%; font-size: 0.88rem;" placeholder="Mã giao dịch ngân hàng / tên người chuyển...">' +
+            '<div style="margin-bottom: 10px;">' +
+            '<input type="text" id="receipt-note-input" class="store-input" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; width: 100%; font-size: 0.82rem; padding: 7px 10px;" placeholder="Mã giao dịch / tên người chuyển...">' +
             '</div>' +
-            '<button type="submit" class="btn btn-apple-primary btn-block" id="btn-send-receipt">' +
+            '<button type="submit" class="btn btn-apple-primary btn-block" id="btn-send-receipt" style="padding: 9px 16px; font-size: 0.88rem;">' +
             '<span>Gửi Biên Lai Xác Nhận</span>' +
             '</button>' +
             '</form>';
 
-        html += '<div id="checkout-dynamic-status" style="margin-top: 14px;"></div>';
+        html += '<div id="checkout-dynamic-status" style="margin-top: 10px;"></div>';
 
         checkoutModalBody.innerHTML = html;
+
+        // Bắt đầu đếm ngược 15 phút (900 giây)
+        startCheckoutTimer(900);
 
         // Xử lý đổi tên file khi chọn ảnh
         const fileInput = document.getElementById('receipt-file-input');
@@ -1813,6 +1879,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (formReceipt) {
             formReceipt.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                stopCheckoutTimer();
                 const note = document.getElementById('receipt-note-input').value.trim();
                 const file = fileInput && fileInput.files ? fileInput.files[0] : null;
                 const btnSubmit = document.getElementById('btn-send-receipt');

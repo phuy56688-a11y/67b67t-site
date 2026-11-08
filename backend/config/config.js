@@ -53,7 +53,7 @@ const config = {
     host: process.env.RCON_HOST || '127.0.0.1',
     port: parseInt(process.env.RCON_PORT, 10) || 25575,
     password: process.env.RCON_PASSWORD || '',
-    rankCommand: process.env.RCON_RANK_COMMAND || 'giverank {username} plus {orderId}',
+    rankCommand: process.env.RCON_RANK_COMMAND || 'setrankplus {username}',
     retryIntervalMs: parseInt(process.env.RETRY_WORKER_INTERVAL_MS, 10) || 60000
   },
 

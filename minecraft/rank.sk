@@ -31,8 +31,44 @@ function getPlayerRankName(p: player) :: string:
 # ------------------------------------------------------------------------------
 # 2. LỆNH CẤP VÀ QUẢN LÝ RANK (DÀNH RIÊNG CHO CONSOLE & master_Sk)
 # ------------------------------------------------------------------------------
+command /setrankplus <player>:
+    description: Lệnh cấp Rank Plus trực tiếp từ RCON Backend hoặc Admin master_Sk
+    usage: /setrankplus <tên_người_chơi>
+    trigger:
+        if sender is not console:
+            if sender's name is not {@admin_name}:
+                send "{@prefix} &cLệnh này chỉ dành riêng cho Admin master_Sk hoặc Hệ thống RCON Backend!" to sender
+                stop
+
+        if arg-1 is not set:
+            send "{@prefix} &cVui lòng chỉ định người chơi!" to sender
+            stop
+
+        set {_target} to arg-1
+        set {rank::%uuid of {_target}%} to "plus"
+        set {rank_granted_at::%uuid of {_target}%} to now
+
+        send "{@prefix} &aĐã cấp thành công &b&lRank Plus &acho người chơi &e%{_target}%" to sender
+
+        if {_target} is online:
+            play sound "ui.toast.challenge_complete" with volume 1 and pitch 1 to {_target}
+            send title "&6✦ &b&lRANK PLUS &6✦" with subtitle "&aKích hoạt thành công quyền lợi 4 Home & 5 Ender Chest!" to {_target} for 5 seconds
+            send "" to {_target}
+            send "&6====================================================" to {_target}
+            send " &eChúc mừng bạn đã sở hữu &b&lRank Plus &etrên máy chủ &667B67T!" to {_target}
+            send " &aQuyền lợi đã mở khóa:" to {_target}
+            send "   &b✔ 4 Điểm Home lưu trữ &f(/sethome, /home, /homes)" to {_target}
+            send "   &b✔ 5 Rương Ender Chest ảo &f(/ec 1 đến /ec 5)" to {_target}
+            send "   &b✔ Huy hiệu Rank Plus độc quyền trên hệ thống" to {_target}
+            send "&6====================================================" to {_target}
+            send "" to {_target}
+
+        broadcast ""
+        broadcast "&6✦ &eChào đón người chơi &b%{_target}% &eđã nâng cấp lên &b&lRank Plus&e! Cảm ơn bạn đã ủng hộ 67B67T! &6✦"
+        broadcast ""
+
 command /giverank <player> <text> [<text>]:
-    description: Lệnh cấp rank tự động từ RCON Backend hoặc Admin master_Sk
+    description: Lệnh cấp rank tự động từ RCON Backend hoặc Admin master_Sk (Tương thích ngược)
     usage: /giverank <tên_người_chơi> <plus> [mã_đơn_hàng]
     trigger:
         # Kiểm tra bảo mật: Chỉ cho phép Console hoặc đúng tài khoản master_Sk

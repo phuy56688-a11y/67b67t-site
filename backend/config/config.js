@@ -41,10 +41,21 @@ const config = {
     }
   },
 
+  // Cấu hình Cổng Gạch Thẻ Cào Tự Động GachCard (gachcard.net)
+  gachcard: {
+    url: process.env.GACHCARD_URL || 'https://gachcard.net/chargingws/v2',
+    partnerId: (process.env.GACHCARD_PARTNER_ID || '').trim(),
+    partnerKey: (process.env.GACHCARD_PARTNER_KEY || '').trim(),
+    callbackUrl: process.env.GACHCARD_CALLBACK_URL || 'https://67b67t.site/api/payment/card/callback',
+    cardAmount: 10000, // Cố định 10.000 VNĐ theo yêu cầu
+    allowedTelcos: ['VIETTEL', 'GARENA', 'ZING', 'MOBIFONE']
+  },
+
   rank: {
     name: process.env.RANK_PLUS_NAME || 'Rank Plus (4 Home + 5 Ender Chest)',
-    // Giá mới: 5.000 VNĐ | Giá cũ: 50.000 VNĐ (Giảm giá 90%)
+    // Giá mới: 5.000 VNĐ (Bank) | 10.000 VNĐ (Card) | Giá cũ: 50.000 VNĐ
     price: parseInt(process.env.RANK_PLUS_PRICE, 10) || 5000,
+    cardPrice: 10000,
     oldPrice: 50000,
     currency: 'VND'
   },
@@ -75,6 +86,20 @@ config.isZaloPayConfigured = function () {
     appId !== 'your_app_id' &&
     key1 !== 'your_key1' &&
     key2 !== 'your_key2'
+  );
+};
+
+/**
+ * Kiểm tra xem GachCard API credentials đã được cấu hình hay chưa
+ * @returns {boolean}
+ */
+config.isGachCardConfigured = function () {
+  const { partnerId, partnerKey } = config.gachcard;
+  return Boolean(
+    partnerId &&
+    partnerKey &&
+    partnerId !== 'your_partner_id' &&
+    partnerKey !== 'your_partner_key'
   );
 };
 

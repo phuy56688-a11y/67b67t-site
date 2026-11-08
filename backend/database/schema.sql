@@ -24,14 +24,23 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 -- 2. BẢNG QUẢN LÝ ĐƠN HÀNG (ORDERS)
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id TEXT UNIQUE NOT NULL,             -- Mã đơn hàng chuẩn: yyMMdd_XXXXXX
+    order_id TEXT UNIQUE NOT NULL,             -- Mã đơn hàng chuẩn: yyMMdd_XXXXXX hoặc CARD_XXXXXX
     user_id INTEGER,                           -- ID tài khoản người mua (liên kết bảng users)
     buyer_email TEXT,                          -- Email người mua
     username TEXT NOT NULL,                     -- Tên nhân vật Minecraft (3-16 ký tự)
     rank_name TEXT NOT NULL DEFAULT 'plus',    -- Tên gói rank ('plus')
-    amount INTEGER NOT NULL DEFAULT 5000,      -- Giá gói: 5.000 VNĐ (giá cũ 50.000đ gạch ngang, giảm 90%)
+    amount INTEGER NOT NULL DEFAULT 5000,      -- Giá gói: 5.000 VNĐ (Bank) hoặc 10.000 VNĐ (Card)
+    payment_method TEXT NOT NULL DEFAULT 'BANK',-- 'BANK' (Chuyển khoản) hoặc 'CARD' (Thẻ cào GachCard)
+    card_telco TEXT,                           -- Nhà mạng: VIETTEL, GARENA, ZING, MOBIFONE
+    card_code_masked TEXT,                     -- Mã thẻ (PIN) đã ẩn bảo mật (chỉ giữ 4 số cuối)
+    card_serial_masked TEXT,                   -- Số serial đã ẩn bảo mật
+    card_request_id TEXT,                      -- Mã request_id gửi sang GachCard
+    card_trans_id TEXT,                        -- Mã giao dịch do GachCard trả về
+    card_declared_value INTEGER DEFAULT 10000, -- Mệnh giá khai báo (10.000đ)
+    card_real_value INTEGER,                   -- Mệnh giá thực tế nhận từ callback
+    card_callback_data TEXT,                   -- Dữ liệu webhook callback thô
     status TEXT NOT NULL DEFAULT 'PENDING',    -- PENDING, AWAITING_REVIEW, APPROVED, APPROVED_PENDING_DELIVERY, REJECTED, PAID, DELIVERED, FAILED
-    receipt_url TEXT,                          -- Đường dẫn ảnh biên lai thanh toán do khách tải lên
+    receipt_url TEXT,                          -- Đường dẫn ảnh biên lai thanh toán do khách tải lên (Bank)
     receipt_note TEXT,                         -- Ghi chú thanh toán / mã giao dịch ngân hàng do khách nhập
     receipt_submitted_at TEXT,                 -- Thời điểm khách gửi biên lai chờ duyệt
     reviewed_by TEXT,                          -- Email Admin duyệt đơn (phuy56688@gmail.com)

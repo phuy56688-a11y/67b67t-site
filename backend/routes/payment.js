@@ -110,4 +110,66 @@ router.post('/callback', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/payment/card/submit
+ * Khách hàng gửi thông tin Thẻ Cào (GachCard API)
+ * Body: { username: string, telco: string, code: string, serial: string }
+ */
+router.post('/card/submit', optionalAuth, async (req, res) => {
+  try {
+    const { username, telco, code, serial } = req.body;
+
+    if (!username || typeof username !== 'string') {
+      return res.status(400).json({ success: false, error: 'Vui lòng cung cấp tên nhân vật Minecraft hợp lệ.' });
+    }
+    if (!telco || typeof telco !== 'string') {
+      return res.status(400).json({ success: false, error: 'Vui lòng chọn nhà mạng (Viettel, Garena, Zing, Mobifone).' });
+    }
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ success: false, error: 'Vui lòng nhập mã thẻ (PIN).' });
+    }
+    if (!serial || typeof serial !== 'string') {
+      return res.status(400).json({ success: false, error: 'Vui lòng nhập số serial của thẻ.' });
+    }
+
+    const userId = req.user ? req.user.id : null;
+    const buyerEmail = req.user ? req.user.email : null;
+
+    const result = await orderService.createCardOrder({
+      username,
+      telco,
+      code,
+      serial,
+      userId,
+      buyerEmail
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error('❌ [API /payment/card/submit] Lỗi:', err.message);
+    res.status(400).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+/**
+ * POST & GET /api/payment/card/callback
+ * Webhook nhận kết quả gạch thẻ tự động từ GachCard
+ */
+const handleCardCallback = async (req, res) => {
+  try {
+    const payload = Object.keys(req.body).length > 0 ? req.body : req.query;
+    const result = await orderService.processCardCallback(payload);
+    return res.json(result);
+  } catch (err) {
+    console.error('❌ [API /payment/card/callback] Lỗi xử lý callback:', err.message);
+    return res.status(500).json({ status: 'error', message: err.message });
+  }
+};
+
+router.post('/card/callback', handleCardCallback);
+router.get('/card/callback', handleCardCallback);
+
 module.exports = router;

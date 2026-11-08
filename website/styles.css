@@ -3775,6 +3775,194 @@ button,
 }
 
 /* ==========================================================================
+   Two Payment Methods Tabs & Phone Scratch Card (GachCard) UI
+   ========================================================================== */
+.payment-method-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 16px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pay-method-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+}
+
+.pay-method-tab:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.pay-method-tab.active {
+    background: rgba(41, 151, 255, 0.16);
+    border-color: rgba(41, 151, 255, 0.45);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.pay-method-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.pay-method-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pay-method-text strong {
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.pay-method-price {
+    font-size: 0.78rem;
+    color: #30d158;
+    font-weight: 600;
+}
+
+.pay-method-tab.active .pay-method-price {
+    color: #4ce675;
+}
+
+/* Card Amount Banner */
+.card-amount-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 159, 10, 0.09);
+    border: 1px solid rgba(255, 159, 10, 0.28);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 0.84rem;
+    color: #f5f5f7;
+}
+
+.card-amount-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ff9f0a;
+}
+
+.card-amount-sub {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+}
+
+/* Telco Selector Grid (VIETTEL, GARENA, ZING, MOBIFONE) */
+.telco-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 520px) {
+    .telco-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.telco-option {
+    padding: 10px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.telco-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.telco-option.active {
+    background: rgba(41, 151, 255, 0.18);
+    border-color: #2997ff;
+    box-shadow: 0 0 12px rgba(41, 151, 255, 0.35);
+}
+
+.telco-badge {
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: block;
+}
+
+.telco-viettel { color: #ff453a; }
+.telco-garena  { color: #ff9f0a; }
+.telco-zing    { color: #2997ff; }
+.telco-mobifone{ color: #30d158; }
+
+.card-input-group {
+    margin-bottom: 12px;
+}
+
+.card-input-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+/* Method Badges */
+.badge-method {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.badge-method-card {
+    background: rgba(175, 82, 222, 0.18);
+    color: #bf5af2;
+    border: 1px solid rgba(175, 82, 222, 0.4);
+}
+
+.badge-method-bank {
+    background: rgba(41, 151, 255, 0.18);
+    color: #2997ff;
+    border: 1px solid rgba(41, 151, 255, 0.4);
+}
+
+/* Method Filter Pills in Admin Toolbar */
+.admin-method-filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.admin-method-filter-label {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+/* ==========================================================================
    Accessibility: Reduced Motion Preference
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {

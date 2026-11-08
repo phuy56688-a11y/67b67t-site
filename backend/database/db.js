@@ -45,7 +45,16 @@ async function runMigrations() {
       { name: 'receipt_submitted_at', type: 'TEXT' },
       { name: 'reviewed_by', type: 'TEXT' },
       { name: 'reviewed_at', type: 'TEXT' },
-      { name: 'rejection_reason', type: 'TEXT' }
+      { name: 'rejection_reason', type: 'TEXT' },
+      { name: 'payment_method', type: "TEXT DEFAULT 'BANK'" },
+      { name: 'card_telco', type: 'TEXT' },
+      { name: 'card_code_masked', type: 'TEXT' },
+      { name: 'card_serial_masked', type: 'TEXT' },
+      { name: 'card_request_id', type: 'TEXT' },
+      { name: 'card_trans_id', type: 'TEXT' },
+      { name: 'card_declared_value', type: 'INTEGER DEFAULT 10000' },
+      { name: 'card_real_value', type: 'INTEGER' },
+      { name: 'card_callback_data', type: 'TEXT' }
     ];
 
     for (const col of neededCols) {

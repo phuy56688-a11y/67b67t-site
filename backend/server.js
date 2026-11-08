@@ -83,9 +83,10 @@ app.get('/api/health', (req, res) => {
     return res.json({
         status: 'UP',
         service: '67b67t-store-backend',
-        version: '1.0.0',
+        version: '1.1.0',
         timestamp: new Date().toISOString(),
         zalopay_configured: config.isZaloPayConfigured(),
+        gachcard_configured: config.isGachCardConfigured(),
         minecraft_rcon: {
             host: config.minecraft.host,
             port: config.minecraft.port

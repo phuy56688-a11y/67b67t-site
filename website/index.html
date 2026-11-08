@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=8.9">
+    <link rel="stylesheet" href="styles.css?v=9.0">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -438,7 +438,7 @@
                                         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
                                         <line x1="2" y1="10" x2="22" y2="10"></line>
                                     </svg>
-                                    <span>Mua Rank Plus (5.000 đ)</span>
+                                    <span>Mua Rank Plus (Bank 5k &bull; Thẻ 10k)</span>
                                 </button>
                                 <button type="button" class="btn btn-apple-subtle" id="btn-open-lookup">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg">
@@ -693,7 +693,7 @@
         <div class="modal-sheet modal-sheet-checkout">
             <div class="modal-header">
                 <div class="modal-header-text">
-                    <span class="badge-modal-top">ZALOPAY MERCHANT</span>
+                    <span class="badge-modal-top">THANH TOÁN AN TOÀN 67B67T</span>
                     <h3 id="checkout-modal-title">Thanh Toán Rank Plus</h3>
                 </div>
                 <button type="button" class="modal-close" id="checkout-modal-close" aria-label="Đóng cửa sổ">&times;</button>
@@ -922,6 +922,13 @@
                         <button type="button" class="filter-pill" data-status="APPROVED">✔ Đã Duyệt</button>
                         <button type="button" class="filter-pill" data-status="REJECTED">✖ Từ Chối</button>
                     </div>
+                    <div class="admin-method-filter-row" style="margin-top: 6px;">
+                        <span class="admin-method-filter-label">Phương thức:</span>
+                        <button type="button" class="filter-pill active method-pill" data-method="ALL">Toàn Bộ</button>
+                        <button type="button" class="filter-pill method-pill" data-method="BANK">🏦 Ngân Hàng (5k)</button>
+                        <button type="button" class="filter-pill method-pill" data-method="CARD">💳 Thẻ Cào (10k)</button>
+                    </div>
+                    </div>
                     <div class="admin-search-box">
                         <input type="text" id="admin-search-input" class="store-input" placeholder="Tìm theo tên Minecraft, email, mã đơn...">
                         <button type="button" class="btn btn-apple-subtle" id="btn-admin-refresh">🔄 Làm Mới</button>
@@ -1023,6 +1030,6 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=8.9"></script>
+    <script src="script.js?v=9.0"></script>
 </body>
 </html>

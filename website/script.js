@@ -1777,11 +1777,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
-    // Render quy trình thanh toán thủ công 5.000 VNĐ + QR Image + Nội dung CK random + Đồng hồ 15 phút
+    // Render quy trình thanh toán Rank Plus: Hỗ trợ 2 phương thức (Bank 5.000đ & Thẻ cào 10.000đ)
     function renderManualCheckoutView(orderData, username, customTransferContent) {
         const orderId = orderData.order_id;
-        const amount = orderData.amount || 5000;
-        const oldAmount = orderData.old_amount || 50000;
+        const bankAmount = 5000;
+        const cardAmount = 10000;
         const transferContent = customTransferContent || (orderData.manual_payment ? orderData.manual_payment.transferContent : (Math.floor(Math.random() * 670) + 1 + '-' + username));
 
         const manual = {
@@ -1797,10 +1797,30 @@ document.addEventListener('DOMContentLoaded', () => {
             '<div class="checkout-meta">' +
             '<strong>' + username + ' &bull; Rank Plus</strong>' +
             '<div class="checkout-order-id">Mã đơn: ' + orderId + '</div>' +
-            '<div class="checkout-amount"><del style="color: var(--text-tertiary); font-size: 0.82rem; margin-right: 4px;">' + oldAmount.toLocaleString('vi-VN') + ' đ</del> <span style="color: #30d158; font-weight: 800; font-size: 0.95rem;">' + amount.toLocaleString('vi-VN') + ' VNĐ</span> <span class="badge-tag-discount">-90%</span></div>' +
+            '<div class="checkout-amount"><del style="color: var(--text-tertiary); font-size: 0.82rem; margin-right: 4px;">50.000 đ</del> <span id="checkout-display-price" style="color: #30d158; font-weight: 800; font-size: 0.95rem;">5.000 VNĐ</span> <span class="badge-tag-discount" id="checkout-display-discount">-90%</span></div>' +
             '</div>' +
             '</div>';
 
+        // 2 Phương Thức Thanh Toán (Segmented Control phong cách Apple)
+        html += '<div class="payment-method-tabs" id="checkout-method-tabs">' +
+            '<button type="button" class="pay-method-tab active" data-method="BANK" id="tab-checkout-bank">' +
+            '<span class="pay-method-icon">🏦</span>' +
+            '<span class="pay-method-text">' +
+            '<strong>Chuyển Khoản Ngân Hàng</strong>' +
+            '<span class="pay-method-price">5.000 VNĐ</span>' +
+            '</span>' +
+            '</button>' +
+            '<button type="button" class="pay-method-tab" data-method="CARD" id="tab-checkout-card">' +
+            '<span class="pay-method-icon">💳</span>' +
+            '<span class="pay-method-text">' +
+            '<strong>Thẻ Cào Điện Thoại</strong>' +
+            '<span class="pay-method-price">10.000 VNĐ</span>' +
+            '</span>' +
+            '</button>' +
+            '</div>';
+
+        // Panel 1: BANK TRANSFER (5.000 VNĐ) - GIỮ NGUYÊN 100% QUY TRÌNH HIỆN TẠI
+        html += '<div id="checkout-panel-bank" class="checkout-method-panel">';
         html += '<div class="checkout-countdown-bar" id="checkout-countdown-bar">' +
             '<span>⏳ Đơn hàng hết hạn sau:</span>' +
             '<span id="checkout-timer" class="checkout-timer-digits">15:00</span>' +
@@ -1853,15 +1873,202 @@ document.addEventListener('DOMContentLoaded', () => {
             '<span>Gửi Biên Lai Xác Nhận</span>' +
             '</button>' +
             '</form>';
+        html += '</div>'; // End #checkout-panel-bank
+
+        // Panel 2: PHONE SCRATCH CARD (GACHCARD API - MỆNH GIÁ 10.000 VNĐ)
+        html += '<div id="checkout-panel-card" class="checkout-method-panel" style="display: none;">';
+        html += '<div class="card-amount-banner">' +
+            '<div>' +
+            '<span style="display: block; font-size: 0.74rem; color: var(--text-tertiary); text-transform: uppercase;">Mệnh Giá Thẻ Cào Yêu Cầu:</span>' +
+            '<strong class="card-amount-val">10.000 VNĐ</strong>' +
+            '</div>' +
+            '<span style="font-size: 0.74rem; background: rgba(48, 209, 88, 0.15); color: #30d158; border: 1px solid rgba(48, 209, 88, 0.35); padding: 3px 8px; border-radius: 6px; font-weight: 700;">GACHCARD API</span>' +
+            '</div>';
+
+        html += '<div style="margin-bottom: 12px;">' +
+            '<label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Chọn Nhà Mạng (Chỉ 4 nhà mạng được hỗ trợ):</label>' +
+            '<div class="telco-selector-grid" id="checkout-telco-grid">' +
+            '<div class="telco-option active" data-telco="VIETTEL">' +
+            '<span class="telco-badge telco-viettel">VIETTEL</span>' +
+            '</div>' +
+            '<div class="telco-option" data-telco="GARENA">' +
+            '<span class="telco-badge telco-garena">GARENA</span>' +
+            '</div>' +
+            '<div class="telco-option" data-telco="ZING">' +
+            '<span class="telco-badge telco-zing">ZING</span>' +
+            '</div>' +
+            '<div class="telco-option" data-telco="MOBIFONE">' +
+            '<span class="telco-badge telco-mobifone">MOBIFONE</span>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+
+        html += '<form id="form-submit-card" class="receipt-upload-form" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px;">' +
+            '<div class="card-input-group">' +
+            '<label for="card-pin-input">Mã Thẻ (PIN):</label>' +
+            '<input type="text" id="card-pin-input" class="store-input" placeholder="Nhập mã thẻ cào (PIN) sau lớp cào..." required autocomplete="off" spellcheck="false" style="padding: 8px 12px; font-size: 0.85rem;">' +
+            '</div>' +
+            '<div class="card-input-group">' +
+            '<label for="card-serial-input">Số Serial Thẻ:</label>' +
+            '<input type="text" id="card-serial-input" class="store-input" placeholder="Nhập số serial in trên thẻ..." required autocomplete="off" spellcheck="false" style="padding: 8px 12px; font-size: 0.85rem;">' +
+            '</div>' +
+            '<button type="submit" class="btn btn-apple-primary btn-block" id="btn-submit-card" style="padding: 10px 16px; font-size: 0.9rem; margin-top: 14px;">' +
+            '<span>💳 Gửi Thẻ Cào &amp; Kích Hoạt Rank Plus</span>' +
+            '</button>' +
+            '<div style="font-size: 0.74rem; color: var(--text-tertiary); text-align: center; margin-top: 8px; line-height: 1.45;">' +
+            '⚡ Kết nối tự động cổng gạch thẻ GachCard. Lệnh <code>/setrankplus</code> sẽ được tự động kích hoạt ngay sau khi thẻ được xác nhận hợp lệ.' +
+            '</div>' +
+            '</form>';
+        html += '</div>'; // End #checkout-panel-card
 
         html += '<div id="checkout-dynamic-status" style="margin-top: 10px;"></div>';
 
         checkoutModalBody.innerHTML = html;
 
-        // Bắt đầu đếm ngược 15 phút (900 giây)
+        // Bắt đầu đếm ngược 15 phút (900 giây) cho Bank
         startCheckoutTimer(900);
 
-        // Xử lý đổi tên file khi chọn ảnh
+        // Chuyển đổi qua lại giữa 2 Phương Thức Thanh Toán (Bank vs Card)
+        let selectedTelco = 'VIETTEL';
+        const tabBank = document.getElementById('tab-checkout-bank');
+        const tabCard = document.getElementById('tab-checkout-card');
+        const panelBank = document.getElementById('checkout-panel-bank');
+        const panelCard = document.getElementById('checkout-panel-card');
+        const displayPrice = document.getElementById('checkout-display-price');
+        const displayDiscount = document.getElementById('checkout-display-discount');
+
+        if (tabBank && tabCard && panelBank && panelCard) {
+            tabBank.addEventListener('click', () => {
+                tabBank.classList.add('active');
+                tabCard.classList.remove('active');
+                panelBank.style.display = 'block';
+                panelCard.style.display = 'none';
+                if (displayPrice) displayPrice.textContent = '5.000 VNĐ';
+                if (displayDiscount) displayDiscount.textContent = '-90%';
+            });
+
+            tabCard.addEventListener('click', () => {
+                tabCard.classList.add('active');
+                tabBank.classList.remove('active');
+                panelCard.style.display = 'block';
+                panelBank.style.display = 'none';
+                if (displayPrice) displayPrice.textContent = '10.000 VNĐ';
+                if (displayDiscount) displayDiscount.textContent = '-80%';
+            });
+        }
+
+        // Lựa chọn nhà mạng (Viettel, Garena, Zing, Mobifone)
+        const telcoOptions = document.querySelectorAll('.telco-option');
+        telcoOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                telcoOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedTelco = opt.getAttribute('data-telco') || 'VIETTEL';
+            });
+        });
+
+        // Xử lý gửi thẻ cào GachCard
+        const formCard = document.getElementById('form-submit-card');
+        if (formCard) {
+            formCard.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const pin = (document.getElementById('card-pin-input')?.value || '').trim();
+                const serial = (document.getElementById('card-serial-input')?.value || '').trim();
+                const btnSubmitCard = document.getElementById('btn-submit-card');
+
+                if (!selectedTelco) {
+                    showAppleToast('⚠️ Vui lòng chọn nhà mạng (Viettel, Garena, Zing, Mobifone)!', 3500);
+                    return;
+                }
+                if (!pin || pin.length < 8) {
+                    showAppleToast('⚠️ Vui lòng nhập đúng mã thẻ (PIN) hợp lệ (tối thiểu 8 ký tự)!', 3500);
+                    document.getElementById('card-pin-input')?.focus();
+                    return;
+                }
+                if (!serial || serial.length < 8) {
+                    showAppleToast('⚠️ Vui lòng nhập đúng số serial hợp lệ (tối thiểu 8 ký tự)!', 3500);
+                    document.getElementById('card-serial-input')?.focus();
+                    return;
+                }
+
+                if (btnSubmitCard) {
+                    btnSubmitCard.disabled = true;
+                    btnSubmitCard.innerHTML = '<span>Đang gửi thẻ tới cổng GachCard...</span>';
+                }
+
+                const cardOrderId = 'CARD_' + Math.floor(1000000000 + Math.random() * 9000000000);
+                let backendCardResult = null;
+
+                try {
+                    const token = getAuthToken();
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                    const res = await fetch(resolveApiUrl('/payment/card/submit'), {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({
+                            username: username,
+                            telco: selectedTelco,
+                            code: pin,
+                            serial: serial
+                        })
+                    });
+                    if (res.ok) {
+                        backendCardResult = await res.json();
+                    }
+                } catch (_) {}
+
+                const finalOrderId = (backendCardResult && backendCardResult.orderId) || cardOrderId;
+                const finalStatus = (backendCardResult && backendCardResult.status) || 'AWAITING_REVIEW';
+                const maskedSerial = serial.length > 4 ? serial.slice(0, 3) + '***' + serial.slice(-4) : '****';
+
+                // Lưu vào lịch sử đơn hàng của người dùng trên máy
+                const localOrdersKey = '67b67t_local_orders';
+                const localOrders = JSON.parse(localStorage.getItem(localOrdersKey) || '[]');
+                const newCardOrderRecord = {
+                    order_id: finalOrderId,
+                    username: username,
+                    buyer_email: (getCurrentUser() && getCurrentUser().email) || 'Khách vãng lai',
+                    rank_name: 'Rank Plus',
+                    amount: 10000,
+                    payment_method: 'CARD',
+                    card_telco: selectedTelco,
+                    card_serial_masked: maskedSerial,
+                    status: finalStatus,
+                    created_at: new Date().toISOString()
+                };
+                localOrders.unshift(newCardOrderRecord);
+                localStorage.setItem(localOrdersKey, JSON.stringify(localOrders));
+
+                // Đồng bộ ngay vào kho Admin Orders
+                if (typeof getAdminOrdersStore === 'function') {
+                    const adminOrders = getAdminOrdersStore();
+                    const existingIdx = adminOrders.findIndex(o => o.order_id === finalOrderId);
+                    if (existingIdx >= 0) {
+                        adminOrders[existingIdx] = Object.assign(adminOrders[existingIdx], newCardOrderRecord);
+                    } else {
+                        adminOrders.unshift(newCardOrderRecord);
+                    }
+                    saveAdminOrdersStore(adminOrders);
+                }
+
+                showAppleToast('🎉 ĐÃ TIẾP NHẬN THẺ ' + selectedTelco + ' 10.000Đ! Đang chuyển về bảng quản lý đơn...', 4500);
+
+                // Yêu cầu 4: Chuyển về đúng trang quản trị đơn hàng
+                const curUser = getCurrentUser();
+                if (curUser && curUser.email === 'phuy56688@gmail.com') {
+                    setTimeout(() => {
+                        closeModal(checkoutModal);
+                        openAdminModal();
+                    }, 1200);
+                } else {
+                    renderAwaitingReviewState(finalOrderId, username, 'Thẻ cào ' + selectedTelco + ' 10.000đ của bạn đã được gửi tới hệ thống GachCard.<br>Rank Plus sẽ được tự động kích hoạt ngay sau khi thẻ được xác minh thành công.');
+                }
+            });
+        }
+
+        // Xử lý đổi tên file khi chọn ảnh (cho Bank)
         const fileInput = document.getElementById('receipt-file-input');
         const fileLabel = document.getElementById('receipt-file-label');
         if (fileInput && fileLabel) {
@@ -1874,7 +2081,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Xử lý nộp form biên lai
+        // Xử lý nộp form biên lai (cho Bank)
         const formReceipt = document.getElementById('form-submit-receipt');
         if (formReceipt) {
             formReceipt.addEventListener('submit', async (e) => {
@@ -1921,6 +2128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     buyer_email: (getCurrentUser() && getCurrentUser().email) || 'Khách vãng lai',
                     rank_name: 'Rank Plus',
                     amount: 5000,
+                    payment_method: 'BANK',
                     status: 'AWAITING_REVIEW',
                     transfer_content: manual.transferContent,
                     receipt_note: note || (file ? file.name : ''),
@@ -1941,8 +2149,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveAdminOrdersStore(adminOrders);
                 }
 
-                // Hiển thị trạng thái CHỜ DUYỆT
-                renderAwaitingReviewState(orderId, username);
+                // Yêu cầu 4: Chuyển về đúng trang quản trị đơn hàng
+                const curUser = getCurrentUser();
+                if (curUser && curUser.email === 'phuy56688@gmail.com') {
+                    showAppleToast('✔ Đã tiếp nhận biên lai! Đang chuyển về bảng quản trị...', 3000);
+                    setTimeout(() => {
+                        closeModal(checkoutModal);
+                        openAdminModal();
+                    }, 1200);
+                } else {
+                    renderAwaitingReviewState(orderId, username);
+                }
             });
         }
     }
@@ -2049,6 +2266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterPills = document.querySelectorAll('.filter-pill');
 
     let currentAdminFilter = 'ALL';
+    let currentAdminMethodFilter = 'ALL';
 
     // Store đơn hàng đa tầng cho Quản Trị Viên (Zero-Fail Hybrid Store)
     const ADMIN_ORDERS_KEY = '67b67t_admin_orders_v2';
@@ -2289,11 +2507,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     filtered = filtered.filter(o => o.status === currentAdminFilter);
                 }
             }
+            if (currentAdminMethodFilter !== 'ALL') {
+                filtered = filtered.filter(o => {
+                    const m = (o.payment_method || 'BANK').toUpperCase();
+                    return m === currentAdminMethodFilter;
+                });
+            }
             if (q) {
                 filtered = filtered.filter(o => 
                     (o.order_id && o.order_id.toLowerCase().includes(q)) ||
                     (o.username && o.username.toLowerCase().includes(q)) ||
-                    (o.buyer_email && o.buyer_email.toLowerCase().includes(q))
+                    (o.buyer_email && o.buyer_email.toLowerCase().includes(q)) ||
+                    (o.card_telco && o.card_telco.toLowerCase().includes(q))
                 );
             }
 
@@ -2323,6 +2548,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : '';
                 const buyerEmail = ord.buyer_email || 'Khách vãng lai';
+                const isCard = ord.payment_method === 'CARD';
+                const methodBadge = isCard
+                    ? '<span class="badge-method badge-method-card">💳 THẺ CÀO</span>'
+                    : '<span class="badge-method badge-method-bank">🏦 NGÂN HÀNG</span>';
 
                 let receiptSection = '<span style="color: var(--text-tertiary);">Chưa nộp biên lai</span>';
                 if (ord.receipt_url || ord.receipt_note) {
@@ -2334,6 +2563,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         receiptSection += '<span style="font-size: 0.8rem; color: #dfdfe2;">Ghi chú: ' + ord.receipt_note + '</span>';
                     }
                     receiptSection += '</div>';
+                }
+
+                let paymentDetailHtml = '';
+                if (isCard) {
+                    paymentDetailHtml = '<div style="font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">' +
+                        '<div>Nhà mạng: <strong style="color: #2997ff;">' + (ord.card_telco || 'Thẻ cào') + '</strong> &bull; Mệnh giá: <strong style="color: #30d158;">10.000 đ</strong></div>' +
+                        '<div style="font-size: 0.76rem; color: var(--text-tertiary); margin-top: 2px;">Serial: <code class="mono-code">' + (ord.card_serial_masked || '••••••••') + '</code>' +
+                        (ord.card_trans_id ? ' &bull; GD: ' + ord.card_trans_id : '') + '</div>' +
+                        (ord.rejection_reason ? '<div style="color: #ff6961; font-size: 0.78rem; margin-top: 2px;">Lý do: ' + ord.rejection_reason + '</div>' : '') +
+                        '</div>';
+                } else {
+                    paymentDetailHtml = receiptSection;
                 }
 
                 const isApproved = ord.status === 'APPROVED' || ord.status === 'DELIVERED' || ord.status === 'APPROVED_PENDING_DELIVERY';
@@ -2351,6 +2592,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 actionBtns += ' <button type="button" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã sao chép: /setrankplus ' + ord.username + '\', 3000);" title="Sao chép lệnh" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px;">📋 Copy Lệnh</button>';
                 actionBtns += ' <a href="https://panel.gachcloud.net/server/df28479b/console" target="_blank" class="btn btn-sm btn-apple-subtle" onclick="navigator.clipboard.writeText(\'/setrankplus ' + ord.username + '\'); showAppleToast(\'📋 Đã copy lệnh và mở Console df28479b! Nhấn Ctrl + V rồi Enter nhé!\', 4000);" title="Mở thẳng console df28479b" style="padding: 4px 8px; font-size: 0.74rem; margin-left: 6px; text-decoration: none;">🚀 Mở Console df28479b</a>';
 
+                const displayAmount = ord.amount || (isCard ? 10000 : 5000);
+
                 html += '<div class="admin-order-card">' +
                     '<div class="admin-order-header">' +
                     '<div class="admin-order-user-info">' +
@@ -2361,18 +2604,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     '</div>' +
                     '</div>' +
                     '<div>' +
+                    methodBadge +
                     '<span class="admin-order-id-badge">#' + ord.order_id + '</span> ' +
                     '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
                     '</div>' +
                     '</div>' +
                     '<div class="admin-order-body">' +
                     '<div>' +
-                    '<strong style="display: block; font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 4px;">Chứng từ thanh toán:</strong>' +
-                    receiptSection +
+                    '<strong style="display: block; font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 4px;">' + (isCard ? 'Thông tin thẻ cào:' : 'Chứng từ thanh toán:') + '</strong>' +
+                    paymentDetailHtml +
                     '</div>' +
                     '<div style="text-align: right;">' +
-                    '<strong style="display: block; font-size: 1.15rem; color: #30d158;">' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ</strong>' +
-                    '<span style="font-size: 0.78rem; color: var(--text-tertiary);">Gói Rank Plus</span>' +
+                    '<strong style="display: block; font-size: 1.15rem; color: #30d158;">' + displayAmount.toLocaleString('vi-VN') + ' đ</strong>' +
+                    '<span style="font-size: 0.78rem; color: var(--text-tertiary);">' + (isCard ? 'Thẻ Cào 10k' : 'Chuyển Khoản 5k') + '</span>' +
                     '</div>' +
                     '</div>' +
                     '<div class="admin-order-actions">' +
@@ -2394,7 +2638,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 1800);
-                const url = resolveApiUrl('/admin/orders?status=' + encodeURIComponent(currentAdminFilter) + '&q=' + encodeURIComponent(q));
+                const url = resolveApiUrl('/admin/orders?status=' + encodeURIComponent(currentAdminFilter) + '&method=' + encodeURIComponent(currentAdminMethodFilter) + '&q=' + encodeURIComponent(q));
                 const res = await fetch(url, {
                     headers: { 'Authorization': 'Bearer ' + token },
                     signal: controller.signal
@@ -2655,12 +2899,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Filter pills click
+    // Filter pills click (Status)
     filterPills.forEach(pill => {
         pill.addEventListener('click', () => {
             filterPills.forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
             currentAdminFilter = pill.getAttribute('data-status') || 'ALL';
+            loadAdminOrdersList();
+        });
+    });
+
+    // Method pills click (Payment Method: ALL, BANK, CARD)
+    const methodPills = document.querySelectorAll('.method-pill');
+    methodPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            methodPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentAdminMethodFilter = pill.getAttribute('data-method') || 'ALL';
             loadAdminOrdersList();
         });
     });
@@ -2718,14 +2973,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : '';
 
+                const isCard = ord.payment_method === 'CARD';
+                const methodBadge = isCard
+                    ? '<span class="badge-method badge-method-card">💳 THẺ CÀO</span>'
+                    : '<span class="badge-method badge-method-bank">🏦 NGÂN HÀNG</span>';
+
                 html += '<div class="lookup-order-card" style="margin-bottom: 14px;">' +
                     '<div class="lookup-order-top">' +
-                    '<span class="lookup-order-id">#' + ord.order_id + '</span>' +
+                    '<div>' + methodBadge + '<span class="lookup-order-id">#' + ord.order_id + '</span></div>' +
                     '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
                     '</div>' +
                     '<div class="lookup-order-bottom" style="margin-bottom: 10px;">' +
-                    '<span>Nhân vật: <strong>' + ord.username + '</strong></span>' +
-                    '<span style="color: #30d158; font-weight: 700;">' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
+                    '<span>Nhân vật: <strong>' + ord.username + '</strong>' + (isCard ? ' &bull; Mạng: ' + (ord.card_telco || 'Thẻ') : '') + '</span>' +
+                    '<span style="color: #30d158; font-weight: 700;">' + (ord.amount || (isCard ? 10000 : 5000)).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
                     '</div>' +
                     '<div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; font-size: 0.82rem; color: #dfdfe2; line-height: 1.45;">' +
                     statusNotice +
@@ -2817,14 +3077,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : 'Mới tạo';
 
+                const isCard = ord.payment_method === 'CARD';
+                const methodBadge = isCard
+                    ? '<span class="badge-method badge-method-card">💳 THẺ CÀO</span>'
+                    : '<span class="badge-method badge-method-bank">🏦 NGÂN HÀNG</span>';
+
                 html += '<div class="lookup-order-card">' +
                     '<div class="lookup-order-top">' +
-                    '<span class="lookup-order-id">#' + ord.order_id + '</span>' +
+                    '<div>' + methodBadge + '<span class="lookup-order-id">#' + ord.order_id + '</span></div>' +
                     '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
                     '</div>' +
                     '<div class="lookup-order-bottom">' +
-                    '<span>Tài khoản: <strong>' + ord.username + '</strong></span>' +
-                    '<span>' + (ord.amount || 5000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
+                    '<span>Tài khoản: <strong>' + ord.username + '</strong>' + (isCard ? ' (' + (ord.card_telco || 'Thẻ') + ')' : '') + '</span>' +
+                    '<span>' + (ord.amount || (isCard ? 10000 : 5000)).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
                     '</div>' +
                     '</div>';
             });

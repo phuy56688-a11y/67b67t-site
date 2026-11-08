@@ -28,7 +28,7 @@ router.get('/dashboard', async (req, res) => {
     const revenueRow = await db.get("SELECT SUM(amount) AS sum FROM orders WHERE status IN ('APPROVED', 'DELIVERED')");
 
     const recentOrders = await db.all(
-      `SELECT id, order_id, user_id, buyer_email, username, rank_name, amount, status, 
+      `SELECT id, order_id, user_id, buyer_email, username, rank_name, amount, payment_method, card_telco, card_serial_masked, status, 
               receipt_url, receipt_note, receipt_submitted_at, reviewed_by, reviewed_at, rejection_reason, created_at
        FROM orders 
        ORDER BY id DESC LIMIT 10`
@@ -57,7 +57,7 @@ router.get('/dashboard', async (req, res) => {
  */
 router.get('/orders', async (req, res) => {
   try {
-    const { status, q, page = 1, limit = 20 } = req.query;
+    const { status, method, q, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     let whereClauses = [];
@@ -72,10 +72,15 @@ router.get('/orders', async (req, res) => {
       }
     }
 
+    if (method && method !== 'ALL') {
+      whereClauses.push("payment_method = ?");
+      params.push(method.toUpperCase());
+    }
+
     if (q && q.trim()) {
       const term = `%${q.trim()}%`;
-      whereClauses.push("(order_id LIKE ? OR username LIKE ? OR buyer_email LIKE ?)");
-      params.push(term, term, term);
+      whereClauses.push("(order_id LIKE ? OR username LIKE ? OR buyer_email LIKE ? OR card_telco LIKE ?)");
+      params.push(term, term, term, term);
     }
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
@@ -84,8 +89,9 @@ router.get('/orders', async (req, res) => {
     const total = countRow.total || 0;
 
     const orders = await db.all(
-      `SELECT id, order_id, user_id, buyer_email, username, rank_name, amount, status, 
-              receipt_url, receipt_note, receipt_submitted_at, reviewed_by, reviewed_at, rejection_reason, rcon_delivered_at, created_at
+      `SELECT id, order_id, user_id, buyer_email, username, rank_name, amount, payment_method, 
+              card_telco, card_serial_masked, card_code_masked, card_trans_id, card_declared_value, card_real_value,
+              status, receipt_url, receipt_note, receipt_submitted_at, reviewed_by, reviewed_at, rejection_reason, rcon_delivered_at, created_at
        FROM orders 
        ${whereSql}
        ORDER BY id DESC LIMIT ? OFFSET ?`,

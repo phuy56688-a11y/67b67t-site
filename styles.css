@@ -3963,6 +3963,170 @@ button,
 }
 
 /* ==========================================================================
+   Store Payment Method Selector (Trực Tiếp Trên Trang Chủ Trước Khi Mua)
+   ========================================================================== */
+.store-method-select-wrap {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.store-method-selector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.store-method-option {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    user-select: none;
+    text-align: left;
+    outline: none;
+}
+
+.store-method-option:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.28);
+    transform: translateY(-2px);
+}
+
+.store-method-option.active {
+    background: rgba(41, 151, 255, 0.12);
+    border-color: #2997ff;
+    box-shadow: 0 0 24px rgba(41, 151, 255, 0.25);
+}
+
+.store-method-option[data-method="CARD"].active {
+    background: rgba(175, 82, 222, 0.14);
+    border-color: #af52de;
+    box-shadow: 0 0 24px rgba(175, 82, 222, 0.25);
+}
+
+.method-option-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.method-option-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(48, 209, 88, 0.16);
+    color: #30d158;
+    border: 1px solid rgba(48, 209, 88, 0.35);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.method-option-badge.badge-purple {
+    background: rgba(175, 82, 222, 0.2);
+    color: #bf5af2;
+    border-color: rgba(175, 82, 222, 0.4);
+}
+
+.method-option-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.store-method-option.active .method-option-radio {
+    border-color: #2997ff;
+    background: #2997ff;
+}
+
+.store-method-option[data-method="CARD"].active .method-option-radio {
+    border-color: #af52de;
+    background: #af52de;
+}
+
+.store-method-option.active .method-option-radio::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.method-option-icon {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.method-option-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 3px;
+}
+
+.method-option-price {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #2997ff;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.store-method-option[data-method="CARD"] .method-option-price {
+    color: #bf5af2;
+}
+
+.method-option-price small {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-left: 2px;
+}
+
+.method-option-desc {
+    font-size: 0.76rem;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+}
+
+.btn-view-card-pin {
+    background: rgba(175, 82, 222, 0.15);
+    border: 1px solid rgba(175, 82, 222, 0.35);
+    color: #bf5af2;
+    padding: 3px 8px;
+    font-size: 0.74rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-view-card-pin:hover {
+    background: rgba(175, 82, 222, 0.25);
+    border-color: #af52de;
+}
+
+@media (max-width: 680px) {
+    .store-method-selector-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
+/* ==========================================================================
    Accessibility: Reduced Motion Preference
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {

@@ -17,7 +17,7 @@
     <title>67B67T — Thế Giới Sinh Tồn Đỉnh Cao</title>
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%23000000'/><text x='50%' y='57%' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,system-ui,sans-serif' font-size='44' font-weight='800' fill='%23ffffff'>67</text></svg>">
-    <link rel="stylesheet" href="styles.css?v=9.0">
+    <link rel="stylesheet" href="styles.css?v=9.1">
 </head>
 <body class="loading">
     <!-- 2-Second Cinematic Intro Opening Splash Screen -->
@@ -356,7 +356,7 @@
                             <span class="store-badge-hot">
                                 <span class="pulse-dot"></span> ĐẶC QUYỀN CAO CẤP
                             </span>
-                            <span class="store-badge-discount">🔥 SIÊU ƯU ĐÃI GIẢM 90%</span>
+                            <span class="store-badge-discount" id="store-badge-discount">🔥 SIÊU ƯU ĐÃI GIẢM 90%</span>
                             <span class="store-badge-instant">⚡ Duyệt đơn &amp; kích hoạt an toàn</span>
                         </div>
 
@@ -368,10 +368,10 @@
                             <div class="rank-price-box">
                                 <div class="price-old-row">
                                     <span class="price-strikethrough">50.000 đ</span>
-                                    <span class="badge-tag-discount">-90%</span>
+                                    <span class="badge-tag-discount" id="store-discount-tag">-90%</span>
                                 </div>
-                                <div class="price-value"><span class="currency">VNĐ</span> 5.000</div>
-                                <span class="price-type">Kích hoạt vĩnh viễn &bull; 1 lần duy nhất</span>
+                                <div class="price-value" id="store-display-price"><span class="currency">VNĐ</span> 5.000</div>
+                                <span class="price-type" id="store-price-subtext">Kích hoạt vĩnh viễn &bull; 1 lần duy nhất</span>
                             </div>
                         </div>
 
@@ -420,7 +420,39 @@
 
                         <!-- Purchase Form -->
                         <div class="store-purchase-form">
-                            <label for="store-mc-username" class="store-form-label">Tên nhân vật Minecraft nhận Rank:</label>
+                            <!-- 1. Chọn Phương Thức Thanh Toán Trực Tiếp Trước Khi Mua -->
+                            <div class="store-method-select-wrap">
+                                <label class="store-form-label">1. Chọn phương thức thanh toán trước khi mua:</label>
+                                <div class="store-method-selector-grid">
+                                    <div class="store-method-option active" data-method="BANK" id="store-opt-bank" tabindex="0" role="button" aria-label="Chuyển khoản Ngân Hàng 5.000 VNĐ">
+                                        <div class="method-option-top">
+                                            <span class="method-option-badge">Ưu Đãi -90%</span>
+                                            <span class="method-option-radio"></span>
+                                        </div>
+                                        <div class="method-option-body">
+                                            <div class="method-option-icon">🏦</div>
+                                            <div class="method-option-title">Ngân Hàng / ZaloPay</div>
+                                            <div class="method-option-price">5.000 <small>VNĐ</small></div>
+                                            <div class="method-option-desc">Mã QR ZaloPay, Momo, Banking</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="store-method-option" data-method="CARD" id="store-opt-card" tabindex="0" role="button" aria-label="Thẻ cào điện thoại 10.000 VNĐ">
+                                        <div class="method-option-top">
+                                            <span class="method-option-badge badge-purple">Nạp Nhanh</span>
+                                            <span class="method-option-radio"></span>
+                                        </div>
+                                        <div class="method-option-body">
+                                            <div class="method-option-icon">💳</div>
+                                            <div class="method-option-title">Thẻ Cào Điện Thoại</div>
+                                            <div class="method-option-price">10.000 <small>VNĐ</small></div>
+                                            <div class="method-option-desc">Viettel • Garena • Zing • Mobifone</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <label for="store-mc-username" class="store-form-label" style="margin-top: 14px;">2. Tên nhân vật Minecraft nhận Rank:</label>
                             <div class="store-input-group">
                                 <div class="store-avatar-preview" id="store-avatar-box" title="Avatar Skin Minecraft">
                                     <img src="https://mc-heads.net/avatar/MHF_Steve/48" alt="Skin Avatar" id="store-avatar-img">
@@ -438,7 +470,7 @@
                                         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
                                         <line x1="2" y1="10" x2="22" y2="10"></line>
                                     </svg>
-                                    <span>Mua Rank Plus (Bank 5k &bull; Thẻ 10k)</span>
+                                    <span id="btn-store-buy-label">Mua Bằng Ngân Hàng (5.000đ)</span>
                                 </button>
                                 <button type="button" class="btn btn-apple-subtle" id="btn-open-lookup">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="icon-svg">
@@ -1030,6 +1062,6 @@
     <!-- Satisfying Click Sparks / Particle Canvas Layer -->
     <canvas id="sparks-canvas" class="sparks-canvas" aria-hidden="true"></canvas>
 
-    <script src="script.js?v=9.0"></script>
+    <script src="script.js?v=9.1"></script>
 </body>
 </html>

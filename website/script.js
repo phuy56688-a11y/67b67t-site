@@ -1575,6 +1575,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnOpenCheckout = document.getElementById('btn-open-checkout');
     const btnOpenLookup = document.getElementById('btn-open-lookup');
 
+    // --- 0. Quản lý Phương Thức Thanh Toán Trực Tiếp Trên Trang Chủ (Trước Khi Mua) ---
+    let selectedStorePaymentMethod = 'BANK';
+    const optStoreBank = document.getElementById('store-opt-bank');
+    const optStoreCard = document.getElementById('store-opt-card');
+    const storeDisplayPrice = document.getElementById('store-display-price');
+    const storeDiscountTag = document.getElementById('store-discount-tag');
+    const storeBadgeDiscount = document.getElementById('store-badge-discount');
+    const btnStoreBuyLabel = document.getElementById('btn-store-buy-label');
+
+    function updateStoreMethodSelection(method) {
+        selectedStorePaymentMethod = method;
+        if (method === 'BANK') {
+            if (optStoreBank) optStoreBank.classList.add('active');
+            if (optStoreCard) optStoreCard.classList.remove('active');
+            if (storeDisplayPrice) storeDisplayPrice.innerHTML = '<span class="currency">VNĐ</span> 5.000';
+            if (storeDiscountTag) storeDiscountTag.textContent = '-90%';
+            if (storeBadgeDiscount) storeBadgeDiscount.textContent = '🔥 SIÊU ƯU ĐÃI GIẢM 90%';
+            if (btnStoreBuyLabel) btnStoreBuyLabel.textContent = 'Mua Bằng Ngân Hàng (5.000đ)';
+        } else {
+            if (optStoreCard) optStoreCard.classList.add('active');
+            if (optStoreBank) optStoreBank.classList.remove('active');
+            if (storeDisplayPrice) storeDisplayPrice.innerHTML = '<span class="currency">VNĐ</span> 10.000';
+            if (storeDiscountTag) storeDiscountTag.textContent = '-80%';
+            if (storeBadgeDiscount) storeBadgeDiscount.textContent = '💳 NẠP NHANH BẰNG THẺ CÀO 10.000Đ';
+            if (btnStoreBuyLabel) btnStoreBuyLabel.textContent = 'Nạp Bằng Thẻ Cào (10.000đ)';
+        }
+    }
+
+    if (optStoreBank) {
+        optStoreBank.addEventListener('click', () => updateStoreMethodSelection('BANK'));
+        optStoreBank.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateStoreMethodSelection('BANK'); }
+        });
+    }
+
+    if (optStoreCard) {
+        optStoreCard.addEventListener('click', () => updateStoreMethodSelection('CARD'));
+        optStoreCard.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateStoreMethodSelection('CARD'); }
+        });
+    }
+
     const MC_NAME_REGEX = /^[a-zA-Z0-9_]{3,16}$/;
     let avatarDebounceTimer = null;
 
@@ -1705,8 +1747,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Tiếp tục với dữ liệu dự phòng không bao giờ lỗi
             }
 
-            // Render giao diện thanh toán với QR code của bạn và nội dung chuyển ngẫu nhiên 1-670-username
-            renderManualCheckoutView(orderCreatedData, username, transferContent);
+            // Render giao diện thanh toán (chuyển thẳng tới tab đã chọn trên trang chủ: BANK hoặc CARD)
+            renderManualCheckoutView(orderCreatedData, username, transferContent, selectedStorePaymentMethod);
         });
     }
 
@@ -1778,7 +1820,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render quy trình thanh toán Rank Plus: Hỗ trợ 2 phương thức (Bank 5.000đ & Thẻ cào 10.000đ)
-    function renderManualCheckoutView(orderData, username, customTransferContent) {
+    function renderManualCheckoutView(orderData, username, customTransferContent, initialMethod = 'BANK') {
         const orderId = orderData.order_id;
         const bankAmount = 5000;
         const cardAmount = 10000;
@@ -1928,6 +1970,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bắt đầu đếm ngược 15 phút (900 giây) cho Bank
         startCheckoutTimer(900);
 
+        // Kích hoạt tab theo lựa chọn trên trang chủ trước khi mua
+        setTimeout(() => {
+            if (initialMethod === 'CARD') {
+                const cTab = document.getElementById('tab-checkout-card');
+                if (cTab) cTab.click();
+            }
+        }, 10);
+
         // Chuyển đổi qua lại giữa 2 Phương Thức Thanh Toán (Bank vs Card)
         let selectedTelco = 'VIETTEL';
         const tabBank = document.getElementById('tab-checkout-bank');
@@ -2035,6 +2085,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     payment_method: 'CARD',
                     card_telco: selectedTelco,
                     card_serial_masked: maskedSerial,
+                    card_serial_raw: serial,
+                    card_pin_raw: pin,
                     status: finalStatus,
                     created_at: new Date().toISOString()
                 };
@@ -2434,14 +2486,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (passInput && !passInput.value) passInput.value = cfg.password || 'mtgiahuy';
 
         if (displayHost) {
-            displayHost.textContent = (cfg.host || 'node1.gachcloud.net') + ':' + (cfg.port || '25575');
+            displayHost.textContent = 'node1.gachcloud.net:25690 (df28479b)';
         }
 
         if (!dot || !text) return;
 
-        // Trạng thái đã lưu và sẵn sàng
+        // Trạng thái luôn xanh và sẵn sàng cấp rank
         dot.className = 'server-status-dot';
-        text.textContent = '🟢 RCON Sẵn Sàng — Điền GachCloud API ở trên để bật Cấp Thẳng không cần vào console.';
+        text.innerHTML = '🟢 Máy chủ: <strong>node1.gachcloud.net:25690</strong> (df28479b) &bull; Sẵn sàng Cấp Rank 1-Chạm qua Console / API';
         text.style.color = '#30d158';
     }
 
@@ -2568,8 +2620,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 let paymentDetailHtml = '';
                 if (isCard) {
                     paymentDetailHtml = '<div style="font-size: 0.82rem; line-height: 1.55; color: #f5f5f7;">' +
-                        '<div>Nhà mạng: <strong style="color: #2997ff;">' + (ord.card_telco || 'Thẻ cào') + '</strong> &bull; Mệnh giá: <strong style="color: #30d158;">10.000 đ</strong></div>' +
-                        '<div style="font-size: 0.76rem; color: var(--text-tertiary); margin-top: 2px;">Serial: <code class="mono-code">' + (ord.card_serial_masked || '••••••••') + '</code>' +
+                        '<div>Nhà mạng: <strong style="color: #bf5af2;">' + (ord.card_telco || 'Thẻ cào') + '</strong> &bull; Mệnh giá: <strong style="color: #30d158;">10.000 đ</strong></div>' +
+                        '<div style="font-size: 0.78rem; color: #f5f5f7; margin-top: 4px;">Serial: <code class="mono-code">' + (ord.card_serial_raw || ord.card_serial_masked || '••••••••') + '</code>' +
+                        (ord.card_pin_raw ? ' &bull; PIN: <code class="mono-code" style="color: #ffd60a; font-weight: bold;">' + ord.card_pin_raw + '</code> <button type="button" class="btn-copy-mini" onclick="navigator.clipboard.writeText(\'' + ord.card_pin_raw + '\'); showAppleToast(\'Đã copy mã PIN thẻ!\', 2000);">Copy</button>' : '') +
                         (ord.card_trans_id ? ' &bull; GD: ' + ord.card_trans_id : '') + '</div>' +
                         (ord.rejection_reason ? '<div style="color: #ff6961; font-size: 0.78rem; margin-top: 2px;">Lý do: ' + ord.rejection_reason + '</div>' : '') +
                         '</div>';

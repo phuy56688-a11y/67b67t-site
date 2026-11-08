@@ -1,5 +1,5 @@
 /**
- * 67B67T — Auth Routes (Đăng Ký, Đăng Nhập, Google OAuth & Khôi Phục Mật Khẩu)
+ * 67B67T — Auth Routes (Đăng Ký, Đăng Nhập & Khôi Phục Mật Khẩu)
  */
 
 const express = require('express');
@@ -7,12 +7,10 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { OAuth2Client } = require('google-auth-library');
 const config = require('../config/config');
 const db = require('../database/db');
 const { authenticate } = require('../middleware/auth');
 
-const googleClient = new OAuth2Client(config.google.clientId);
 
 /**
  * Helper: Tạo JWT Token cho phiên đăng nhập (Hạn dùng: 30 ngày)
@@ -157,154 +155,6 @@ router.post('/login', async (req, res) => {
     console.error('[Auth Login Error]', err);
     return res.status(500).json({ success: false, message: 'Lỗi đăng nhập. Vui lòng thử lại sau.' });
   }
-});
-
-/**
- * GET /api/auth/google-config
- * Cung cấp Google Client ID cho Frontend khởi tạo Google Identity Services
- */
-router.get('/google-config', (req, res) => {
-  return res.json({
-    success: true,
-    clientId: config.google.clientId || ''
-  });
-});
-
-/**
- * POST /api/auth/google
- * Đăng nhập hoặc Đăng ký tự động qua Google OAuth ID Token
- * XÁC MINH NGHIÊM NGẶT TẠI BACKEND - CHỐNG GIẢ MẠO
- */
-router.post('/google', async (req, res) => {
-  try {
-    const { credential, idToken } = req.body;
-    const tokenToVerify = credential || idToken;
-
-    if (!tokenToVerify) {
-      return res.status(400).json({ success: false, message: 'Thiếu mã xác thực Google Credential' });
-    }
-
-    let payload;
-
-    // 1. Xác minh chữ ký token từ máy chủ Google
-    if (config.google.clientId) {
-      try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: tokenToVerify,
-          audience: config.google.clientId
-        });
-        payload = ticket.getPayload();
-      } catch (verifyErr) {
-        console.error('[Google OAuth Verify Error]', verifyErr.message);
-        return res.status(401).json({
-          success: false,
-          message: 'Xác thực Google ID Token thất bại: Chữ ký hoặc Audience không hợp lệ.'
-        });
-      }
-    } else {
-      // Khi người dùng chưa điền GOOGLE_CLIENT_ID trong .env:
-      // Giải mã payload an toàn và kiểm tra tính hợp lệ cơ bản
-      const parts = tokenToVerify.split('.');
-      if (parts.length !== 3) {
-        return res.status(400).json({ success: false, message: 'Mã Google ID Token không đúng định dạng JWT' });
-      }
-      try {
-        payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-      } catch (parseErr) {
-        return res.status(400).json({ success: false, message: 'Không thể giải mã Google Token' });
-      }
-
-      // Kiểm tra issuer chuẩn của Google
-      const validIssuers = ['accounts.google.com', 'https://accounts.google.com'];
-      if (!validIssuers.includes(payload.iss)) {
-        return res.status(401).json({ success: false, message: 'Issuer token không phải từ Google' });
-      }
-    }
-
-    if (!payload || !payload.email) {
-      return res.status(400).json({ success: false, message: 'Token Google không chứa thông tin email' });
-    }
-
-    // Kiểm tra cờ email_verified từ Google
-    if (payload.email_verified === false) {
-      return res.status(403).json({ success: false, message: 'Tài khoản Google này chưa được xác minh email' });
-    }
-
-    const googleEmail = payload.email.toLowerCase().trim();
-    const googleSub = payload.sub; // ID duy nhất của người dùng từ Google
-    const googleName = payload.name || googleEmail.split('@')[0];
-    const googlePicture = payload.picture || 'https://mc-heads.net/avatar/MHF_Steve/64';
-
-    // BẢO MẬT TUYỆT ĐỐI THEO YÊU CẦU:
-    // Chỉ duy nhất email phuy56688@gmail.com được cấp quyền ADMIN
-    const role = (googleEmail === config.adminEmail) ? 'ADMIN' : 'USER';
-
-    // Kiểm tra xem user đã tồn tại trong DB theo email hoặc google_id
-    let user = await db.get('SELECT * FROM users WHERE email = ? OR google_id = ?', [googleEmail, googleSub]);
-
-    if (user) {
-      // Cập nhật thông tin mới nhất từ Google
-      await db.run(
-        `UPDATE users SET google_id = ?, role = ?, name = ?, avatar = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`,
-        [googleSub, role, googleName, googlePicture, user.id]
-      );
-      user.role = role;
-      user.name = googleName;
-      user.avatar = googlePicture;
-    } else {
-      // Tạo mới tài khoản
-      const insertResult = await db.run(
-        `INSERT INTO users (email, google_id, role, name, avatar) VALUES (?, ?, ?, ?, ?)`,
-        [googleEmail, googleSub, role, googleName, googlePicture]
-      );
-      user = {
-        id: insertResult.lastID,
-        email: googleEmail,
-        google_id: googleSub,
-        role: role,
-        name: googleName,
-        avatar: googlePicture
-      };
-    }
-
-    console.log(`[Google Auth] Người dùng đăng nhập: ${googleEmail} (Role: ${user.role})`);
-
-    const token = createAuthToken(user);
-
-    return res.json({
-      success: true,
-      message: user.role === 'ADMIN' ? 'Chào mừng Quản trị viên hệ thống!' : 'Đăng nhập Google thành công',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        avatar: user.avatar
-      }
-    });
-
-  } catch (err) {
-    console.error('[Google Auth Controller Error]', err);
-    return res.status(500).json({ success: false, message: 'Lỗi xác thực Google OAuth. Vui lòng thử lại.' });
-  }
-});
-
-/**
- * GET /api/auth/me
- * Lấy thông tin tài khoản hiện tại từ Token
- */
-router.get('/me', authenticate, async (req, res) => {
-  return res.json({
-    success: true,
-    user: {
-      id: req.user.id,
-      email: req.user.email,
-      role: req.user.role,
-      name: req.user.name,
-      avatar: req.user.avatar
-    }
-  });
 });
 
 /**

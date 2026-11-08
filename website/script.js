@@ -932,7 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* --------------------------------------------------------------------------
-       14. Hệ Thống Tài Khoản, Đăng Nhập Google, Duyệt Đơn Thủ Công & Admin Dashboard
+       14. Hệ Thống Tài Khoản, Đăng Nhập, Duyệt Đơn Thủ Công & Admin Dashboard
        -------------------------------------------------------------------------- */
 
     // Helper: Định vị API URL (tự động thích ứng local/production)

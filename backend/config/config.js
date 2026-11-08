@@ -17,12 +17,6 @@ const config = {
   // JWT Secret cho phiên đăng nhập người dùng & quản trị
   jwtSecret: process.env.JWT_SECRET || '67b67t_titanium_jwt_auth_secret_key_2026',
 
-  // Google OAuth 2.0 Credentials
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID ? process.env.GOOGLE_CLIENT_ID.trim() : '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET ? process.env.GOOGLE_CLIENT_SECRET.trim() : ''
-  },
-
   // Cấu hình thanh toán thủ công (Chuyển khoản / Quét QR)
   manualPayment: {
     bankName: process.env.MANUAL_PAY_BANK || 'MB Bank (Quân Đội)',

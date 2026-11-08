@@ -1,0 +1,289 @@
+# ==============================================================================
+# HỆ THỐNG QUẢN LÝ RANK PLUS & QUYỀN LỢI TỰ ĐỘNG - SERVER MINECRAFT 67B67T
+# Tương thích: Paper 1.21.11 | Skript 2.17.1
+# Quản trị viên chỉ định: master_Sk
+# Website tích hợp: 67b67t.site
+# ==============================================================================
+
+options:
+    prefix: &6[67B67T]&r
+    plus_prefix: &b[Plus]&r
+    admin_name: "master_Sk"
+    default_max_homes: 1
+    plus_max_homes: 4
+    store_url: "67b67t.site"
+
+# ------------------------------------------------------------------------------
+# 1. HÀM TIỆN ÍCH KIỂM TRA QUYỀN VÀ RANK
+# ------------------------------------------------------------------------------
+function isPlusMember(p: player) :: boolean:
+    if {rank::%uuid of {_p}%} is "plus":
+        return true
+    if {_p}'s name is {@admin_name}:
+        return true
+    return false
+
+function getPlayerRankName(p: player) :: string:
+    if isPlusMember({_p}) is true:
+        return "Rank Plus"
+    return "Mặc định (Member)"
+
+# ------------------------------------------------------------------------------
+# 2. LỆNH CẤP VÀ QUẢN LÝ RANK (DÀNH RIÊNG CHO CONSOLE & master_Sk)
+# ------------------------------------------------------------------------------
+command /giverank <player> <text> [<text>]:
+    description: Lệnh cấp rank tự động từ RCON Backend hoặc Admin master_Sk
+    usage: /giverank <tên_người_chơi> <plus> [mã_đơn_hàng]
+    trigger:
+        # Kiểm tra bảo mật: Chỉ cho phép Console hoặc đúng tài khoản master_Sk
+        if sender is not console:
+            if sender's name is not {@admin_name}:
+                send "{@prefix} &cLệnh này chỉ dành riêng cho Admin master_Sk hoặc Hệ thống RCON Backend!" to sender
+                stop
+
+        if arg-1 is not set:
+            send "{@prefix} &cVui lòng chỉ định người chơi!" to sender
+            stop
+
+        set {_target} to arg-1
+        set {_rank} to lower case of arg-2
+        set {_orderId} to arg-3
+        if {_orderId} is not set:
+            set {_orderId} to "MANUAL_BY_ADMIN"
+
+        if {_rank} is not "plus":
+            send "{@prefix} &cHiện tại hệ thống chỉ hỗ trợ cấp rank: &eplus" to sender
+            stop
+
+        # Lưu trạng thái rank vào cơ sở dữ liệu Skript
+        set {rank::%uuid of {_target}%} to "plus"
+        set {rank_granted_at::%uuid of {_target}%} to now
+        set {rank_order_id::%uuid of {_target}%} to {_orderId}
+
+        # Thông báo tới Admin / Console thực hiện
+        send "{@prefix} &aĐã cấp thành công &b&lRank Plus &acho người chơi &e%{_target}% &7(Đơn: %{_orderId}%)" to sender
+
+        # Nếu người chơi đang online -> Hiệu ứng âm thanh, Title và thông báo
+        if {_target} is online:
+            play sound "ui.toast.challenge_complete" with volume 1 and pitch 1 to {_target}
+            send title "&6✦ &b&lRANK PLUS &6✦" with subtitle "&aKích hoạt thành công quyền lợi 4 Home & 5 Ender Chest!" to {_target} for 5 seconds
+            send "" to {_target}
+            send "&6====================================================" to {_target}
+            send " &eChúc mừng bạn đã sở hữu &b&lRank Plus &etrên máy chủ &667B67T!" to {_target}
+            send " &7Mã giao dịch: &f%{_orderId}%" to {_target}
+            send " &aQuyền lợi đã mở khóa:" to {_target}
+            send "   &b✔ 4 Điểm Home lưu trữ &f(/sethome, /home, /homes)" to {_target}
+            send "   &b✔ 5 Rương Ender Chest ảo &f(/ec 1 đến /ec 5)" to {_target}
+            send "   &b✔ Huy hiệu Rank Plus độc quyền trên hệ thống" to {_target}
+            send "&6====================================================" to {_target}
+            send "" to {_target}
+
+        # Phát thông báo toàn máy chủ chúc mừng
+        broadcast ""
+        broadcast "&6✦ &eChào đón người chơi &b%{_target}% &eđã nâng cấp lên &b&lRank Plus&e! Cảm ơn bạn đã ủng hộ 67B67T! &6✦"
+        broadcast ""
+
+command /removerank <player>:
+    description: Gỡ rank của người chơi về mặc định
+    usage: /removerank <tên_người_chơi>
+    trigger:
+        if sender is not console:
+            if sender's name is not {@admin_name}:
+                send "{@prefix} &cLệnh này chỉ dành riêng cho Admin master_Sk hoặc Console!" to sender
+                stop
+
+        if arg-1 is not set:
+            send "{@prefix} &cVui lòng chỉ định người chơi!" to sender
+            stop
+
+        set {_target} to arg-1
+        delete {rank::%uuid of {_target}%}
+        delete {rank_order_id::%uuid of {_target}%}
+        send "{@prefix} &eĐã thu hồi Rank Plus của &c%{_target}%&e. Người chơi đã trở về rank thường." to sender
+        if {_target} is online:
+            send "{@prefix} &cRank Plus của bạn đã hết hạn hoặc được quản trị viên đặt lại." to {_target}
+
+command /checkrank [<player>]:
+    description: Kiểm tra rank của bản thân hoặc người chơi khác
+    trigger:
+        if arg-1 is set:
+            if sender is not console:
+                if sender's name is not {@admin_name}:
+                    send "{@prefix} &cBạn chỉ có thể xem rank của chính mình!" to sender
+                    stop
+            set {_target} to arg-1
+        else:
+            if sender is console:
+                send "{@prefix} &cConsole vui lòng nhập tên người chơi: /checkrank <player>" to sender
+                stop
+            set {_target} to player
+
+        set {_isPlus} to isPlusMember({_target})
+        send "&6================ [ THÔNG TIN RANK ] ================" to sender
+        send " &7Người chơi: &f%{_target}'s name%" to sender
+        if {_isPlus} is true:
+            send " &7Hạng hiện tại: &b&lRank Plus" to sender
+            if {rank_order_id::%uuid of {_target}%} is set:
+                send " &7Mã đơn hàng: &e%{rank_order_id::%uuid of {_target}%}%" to sender
+            if {rank_granted_at::%uuid of {_target}%} is set:
+                send " &7Ngày kích hoạt: &f%{rank_granted_at::%uuid of {_target}%}%" to sender
+            send " &7Giới hạn Home: &a4 Điểm" to sender
+            send " &7Giới hạn Ender Chest: &a5 Rương (/ec 1-5)" to sender
+        else:
+            send " &7Hạng hiện tại: &7Rank Mặc Định (Member)" to sender
+            send " &7Giới hạn Home: &e1 Điểm" to sender
+            send " &7Giới hạn Ender Chest: &e1 Rương gốc (/ec 1)" to sender
+            send " &6👉 Nâng cấp Rank Plus nhận 4 Home & 5 EC tại: &b{@store_url}" to sender
+        send "&6====================================================" to sender
+
+command /rankadmin:
+    description: Lệnh xem danh sách thành viên Rank Plus dành riêng cho master_Sk
+    trigger:
+        if sender is not console:
+            if sender's name is not {@admin_name}:
+                send "{@prefix} &cQuyền hạn bị từ chối! Lệnh này chỉ dành cho master_Sk." to sender
+                stop
+
+        send "&6==== DANH SÁCH THÀNH VIÊN PLUS (ADMIN VIEW) ====" to sender
+        set {_count} to 0
+        loop all offline players:
+            if {rank::%uuid of loop-offlineplayer%} is "plus":
+                add 1 to {_count}
+                send " &e%{_count}%. &b%loop-offlineplayer's name% &7- Đơn: &f%{rank_order_id::%uuid of loop-offlineplayer%}%" to sender
+        if {_count} is 0:
+            send " &7Hiện tại chưa có người chơi nào sở hữu Rank Plus." to sender
+        send "&6Tổng cộng: &a%{_count}% &engười chơi." to sender
+
+# ------------------------------------------------------------------------------
+# 3. QUYỀN LỢI 1: HỆ THỐNG HOME (RANK THƯỜNG = 1 HOME, RANK PLUS = 4 HOMES)
+# ------------------------------------------------------------------------------
+command /sethome [<text>]:
+    description: Đặt điểm lưu vị trí Home
+    trigger:
+        set {_hname} to arg-1
+        if {_hname} is not set:
+            set {_hname} to "home"
+        set {_hname} to lower case of {_hname}
+
+        # Đếm số home hiện tại
+        set {_count} to size of {homes_list::%uuid of player%::*}
+
+        # Xác định giới hạn home
+        set {_max} to {@default_max_homes}
+        if isPlusMember(player) is true:
+            set {_max} to {@plus_max_homes}
+
+        # Nếu chưa từng đặt home này và số lượng đã đạt giới hạn
+        if {homes::%uuid of player%::%{_hname}%} is not set:
+            if {_count} >= {_max}:
+                if isPlusMember(player) is false:
+                    send "{@prefix} &cBạn đã đạt giới hạn &e1 Home &ccủa Rank Thường!" to player
+                    send "{@prefix} &6Nâng cấp lên &b&lRank Plus &6để sở hữu &e4 Home &6tại: &b{@store_url}" to player
+                else:
+                    send "{@prefix} &cBạn đã đạt giới hạn tối đa &e4 Home &ccủa Rank Plus! Dùng &f/delhome <tên> &cđể xóa bớt." to player
+                stop
+
+        # Lưu vị trí
+        set {homes::%uuid of player%::%{_hname}%} to player's location
+        if {homes_list::%uuid of player%::*} does not contain {_hname}:
+            add {_hname} to {homes_list::%uuid of player%::*}
+
+        send "{@prefix} &aĐã lưu điểm Home &e%{_hname}% &athành công! (Đang dùng: %size of {homes_list::%uuid of player%::*}%/%{_max}%)" to player
+        play sound "entity.experience_orb.pickup" with volume 0.8 and pitch 1.2 to player
+
+command /home [<text>]:
+    description: Dịch chuyển về điểm Home đã lưu
+    trigger:
+        set {_hname} to arg-1
+        if {_hname} is not set:
+            set {_hname} to "home"
+        set {_hname} to lower case of {_hname}
+
+        if {homes::%uuid of player%::%{_hname}%} is not set:
+            send "{@prefix} &cĐiểm Home &e%{_hname}% &ckhông tồn tại! Gõ &f/homes &cđể xem danh sách." to player
+            stop
+
+        teleport player to {homes::%uuid of player%::%{_hname}%}
+        send "{@prefix} &aĐã dịch chuyển về điểm Home &e%{_hname}%&a!" to player
+        play sound "entity.enderman.teleport" with volume 0.8 and pitch 1 to player
+
+command /delhome [<text>]:
+    description: Xóa một điểm Home
+    trigger:
+        if arg-1 is not set:
+            send "{@prefix} &cVui lòng nhập tên Home cần xóa: &f/delhome <tên>" to player
+            stop
+
+        set {_hname} to lower case of arg-1
+        if {homes::%uuid of player%::%{_hname}%} is not set:
+            send "{@prefix} &cĐiểm Home &e%{_hname}% &ckhông tồn tại!" to player
+            stop
+
+        delete {homes::%uuid of player%::%{_hname}%}
+        remove {_hname} from {homes_list::%uuid of player%::*}
+        send "{@prefix} &eĐã xóa điểm Home &f%{_hname}% &ethành công!" to player
+
+command /homes:
+    description: Xem danh sách các điểm Home của bạn
+    trigger:
+        set {_max} to {@default_max_homes}
+        if isPlusMember(player) is true:
+            set {_max} to {@plus_max_homes}
+
+        set {_total} to size of {homes_list::%uuid of player%::*}
+        send "&6==== DANH SÁCH HOME CỦA BẠN (%{_total}%/%{_max}%) ====" to player
+        if {_total} is 0:
+            send " &7Bạn chưa đặt điểm Home nào. Dùng &f/sethome &7để đặt." to player
+        else:
+            loop {homes_list::%uuid of player%::*}:
+                send " &e- &f%loop-value% &7(Dùng /home %loop-value%)" to player
+        if isPlusMember(player) is false:
+            send "&7(Nâng cấp &bRank Plus &7để mở tối đa 4 Home: &b{@store_url}&7)" to player
+        send "&6============================================" to player
+
+# ------------------------------------------------------------------------------
+# 4. QUYỀN LỢI 2: HỆ THỐNG 5 ENDER CHEST (/ec 1 đến /ec 5)
+# ------------------------------------------------------------------------------
+command /ec [<integer=1>]:
+    aliases: /enderchest
+    description: Mở Ender Chest (Rank Thường: EC 1 | Rank Plus: EC 1 -> 5)
+    trigger:
+        set {_num} to arg-1
+        if {_num} < 1 or {_num} > 5:
+            send "{@prefix} &cSố Ender Chest chỉ từ &e1 &cđến &e5&c!" to player
+            stop
+
+        # Ender Chest #1 là rương mặc định của Minecraft cho tất cả người chơi
+        if {_num} is 1:
+            open player's ender chest to player
+            stop
+
+        # Ender Chest #2 -> #5 yêu cầu Rank Plus
+        if isPlusMember(player) is false:
+            send "{@prefix} &cEnder Chest #%{_num}% là đặc quyền dành riêng cho &b&lRank Plus&c!" to player
+            send "{@prefix} &6👉 Nâng cấp ngay để mở 5 Rương Ender Chest tại: &b{@store_url}" to player
+            play sound "block.chest.locked" with volume 0.8 and pitch 1 to player
+            stop
+
+        # Mở kho đồ ảo 27 ô (3 hàng) cho các rương từ 2 đến 5
+        set {_gui} to a new chest inventory with 3 rows named "&3Ender Chest #%{_num}% &8(&bRank Plus&8)"
+        loop 27 times:
+            set {_slot} to loop-number - 1
+            if {enderchests::%uuid of player%::%{_num}%::%{_slot}%} is set:
+                set slot {_slot} of {_gui} to {enderchests::%uuid of player%::%{_num}%::%{_slot}%}
+
+        # Đánh dấu người chơi đang xem rương số mấy để lưu lại khi đóng rương
+        set {viewing_ec::%uuid of player%} to {_num}
+        open {_gui} to player
+        play sound "block.ender_chest.open" with volume 0.8 and pitch 1 to player
+
+# Sự kiện đóng rương ảo -> Tự động lưu trữ toàn bộ vật phẩm trong kho đồ
+on inventory close:
+    if {viewing_ec::%uuid of player%} is set:
+        set {_num} to {viewing_ec::%uuid of player%}
+        # Lưu 27 ô vào biến danh sách Skript
+        loop 27 times:
+            set {_slot} to loop-number - 1
+            set {enderchests::%uuid of player%::%{_num}%::%{_slot}%} to slot {_slot} of event-inventory
+        delete {viewing_ec::%uuid of player%}
+        play sound "block.ender_chest.close" with volume 0.8 and pitch 1 to player

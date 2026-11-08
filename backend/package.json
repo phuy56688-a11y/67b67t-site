@@ -1,0 +1,30 @@
+{
+  "name": "67b67t-zalopay-backend",
+  "version": "1.0.0",
+  "description": "ZaloPay Merchant Payment Integration & Automated Minecraft Rank Plus Provisioning for 67B67T",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "minecraft",
+    "zalopay",
+    "payment",
+    "paper-mc",
+    "rcon",
+    "rank-plus",
+    "67b67t"
+  ],
+  "author": "67B67T Team",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "rcon-client": "^4.2.5",
+    "sqlite3": "^5.1.7"
+  }
+}

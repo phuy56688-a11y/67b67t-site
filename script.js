@@ -930,4 +930,393 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    /* --------------------------------------------------------------------------
+       14. Store Controller & Automatic ZaloPay Provisioning
+       -------------------------------------------------------------------------- */
+    const storeUsernameInput = document.getElementById('store-mc-username');
+    const storeAvatarImg = document.getElementById('store-avatar-img');
+    const storeInputStatus = document.getElementById('store-input-status');
+    const storeInputHint = document.getElementById('store-input-hint');
+    const btnOpenCheckout = document.getElementById('btn-open-checkout');
+    const btnOpenLookup = document.getElementById('btn-open-lookup');
+
+    const checkoutModal = document.getElementById('checkout-modal');
+    const checkoutModalOverlay = document.getElementById('checkout-modal-overlay');
+    const checkoutModalClose = document.getElementById('checkout-modal-close');
+    const checkoutModalBody = document.getElementById('checkout-modal-body');
+
+    const lookupModal = document.getElementById('lookup-modal');
+    const lookupModalOverlay = document.getElementById('lookup-modal-overlay');
+    const lookupModalClose = document.getElementById('lookup-modal-close');
+    const lookupInput = document.getElementById('lookup-input');
+    const btnDoLookup = document.getElementById('btn-do-lookup');
+    const lookupResults = document.getElementById('lookup-results');
+
+    // API Resolver Helper
+    function resolveApiUrl(path) {
+        if (window.location.port === '5000') {
+            return '/api' + path;
+        }
+        const isLocal = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.protocol === 'file:';
+        const base = isLocal ? 'http://localhost:5000/api' : '/api';
+        return base + path;
+    }
+
+    // Modal Handlers
+    function openCheckoutModal() {
+        if (!checkoutModal) return;
+        checkoutModal.classList.add('active');
+        checkoutModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCheckoutModal() {
+        if (!checkoutModal) return;
+        checkoutModal.classList.remove('active');
+        checkoutModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (activePollingInterval) {
+            clearInterval(activePollingInterval);
+            activePollingInterval = null;
+        }
+    }
+
+    function openLookupModal() {
+        if (!lookupModal) return;
+        lookupModal.classList.add('active');
+        lookupModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        if (lookupInput) {
+            setTimeout(() => lookupInput.focus(), 150);
+        }
+    }
+
+    function closeLookupModal() {
+        if (!lookupModal) return;
+        lookupModal.classList.remove('active');
+        lookupModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    if (checkoutModalOverlay) checkoutModalOverlay.addEventListener('click', closeCheckoutModal);
+    if (checkoutModalClose) checkoutModalClose.addEventListener('click', closeCheckoutModal);
+    if (lookupModalOverlay) lookupModalOverlay.addEventListener('click', closeLookupModal);
+    if (lookupModalClose) lookupModalClose.addEventListener('click', closeLookupModal);
+    if (btnOpenLookup) btnOpenLookup.addEventListener('click', openLookupModal);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (checkoutModal && checkoutModal.classList.contains('active')) closeCheckoutModal();
+            if (lookupModal && lookupModal.classList.contains('active')) closeLookupModal();
+        }
+    });
+
+    // Username Validation & Avatar Skin Loading
+    const MC_NAME_REGEX = /^[a-zA-Z0-9_]{3,16}$/;
+    let avatarDebounceTimer = null;
+
+    if (storeUsernameInput) {
+        storeUsernameInput.addEventListener('input', () => {
+            clearTimeout(avatarDebounceTimer);
+            const val = storeUsernameInput.value.trim();
+
+            if (!val) {
+                if (storeInputStatus) storeInputStatus.className = 'store-input-status';
+                if (storeAvatarImg) storeAvatarImg.src = 'https://mc-heads.net/avatar/MHF_Steve/48';
+                if (storeInputHint) {
+                    storeInputHint.textContent = 'Nhập từ 3 - 16 ký tự (chữ cái, chữ số, gạch dưới)';
+                    storeInputHint.style.color = 'var(--text-tertiary)';
+                }
+                return;
+            }
+
+            const isValid = MC_NAME_REGEX.test(val);
+            if (storeInputStatus) {
+                storeInputStatus.className = 'store-input-status ' + (isValid ? 'valid' : 'invalid');
+            }
+
+            if (isValid) {
+                if (storeInputHint) {
+                    storeInputHint.textContent = 'Tên Minecraft hợp lệ: ' + val;
+                    storeInputHint.style.color = '#30d158';
+                }
+                avatarDebounceTimer = setTimeout(() => {
+                    if (storeAvatarImg) {
+                        storeAvatarImg.src = 'https://mc-heads.net/avatar/' + encodeURIComponent(val) + '/48';
+                    }
+                }, 300);
+            } else {
+                if (storeInputHint) {
+                    storeInputHint.textContent = 'Tên Minecraft không hợp lệ (chỉ gồm 3-16 ký tự a-z, 0-9, _)';
+                    storeInputHint.style.color = '#ff6961';
+                }
+            }
+        });
+    }
+
+    let activePollingInterval = null;
+
+    // Checkout Flow: Triggered on "Mua Bằng ZaloPay"
+    if (btnOpenCheckout) {
+        btnOpenCheckout.addEventListener('click', async () => {
+            const username = storeUsernameInput ? storeUsernameInput.value.trim() : '';
+
+            if (!MC_NAME_REGEX.test(username)) {
+                if (storeUsernameInput) {
+                    storeUsernameInput.focus();
+                    storeUsernameInput.parentElement.classList.add('shake');
+                    setTimeout(() => storeUsernameInput.parentElement.classList.remove('shake'), 400);
+                }
+                showAppleToast('Vui lòng nhập tên Minecraft hợp lệ (3-16 ký tự)!', 2500);
+                return;
+            }
+
+            // Open Checkout Modal with Loading skeleton
+            openCheckoutModal();
+            checkoutModalBody.innerHTML = '<div style="text-align: center; padding: 40px 10px;">' +
+                '<div class="pulse-dot" style="margin: 0 auto 16px; width: 14px; height: 14px; background: #2997ff;"></div>' +
+                '<p style="color: var(--text-secondary); font-size: 0.95rem;">Đang kết nối cổng ZaloPay & khởi tạo đơn hàng...</p>' +
+                '</div>';
+
+            try {
+                const response = await fetch(resolveApiUrl('/payment/create'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username, rankId: 'plus' })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    renderCheckoutError(data.message || 'Không thể tạo đơn hàng');
+                    return;
+                }
+
+                // Render Checkout State based on configuration
+                renderCheckoutView(data, username);
+
+            } catch (err) {
+                console.error('[Create Order Error]', err);
+                renderCheckoutError('Không thể kết nối đến Backend máy chủ (Port 5000). Vui lòng đảm bảo backend đang chạy.');
+            }
+        });
+    }
+
+    function renderCheckoutError(errMsg) {
+        checkoutModalBody.innerHTML = '<div class="payment-unconfigured-banner" style="border-color: rgba(255, 69, 58, 0.4); background: rgba(255, 69, 58, 0.08);">' +
+            '<div class="alert-icon">⚠️</div>' +
+            '<h4 style="color: #ff6961;">Lỗi Khởi Tạo Giao Dịch</h4>' +
+            '<p>' + errMsg + '</p>' +
+            '<button type="button" class="btn btn-apple-subtle" onclick="document.getElementById(\'checkout-modal-close\').click()" style="margin-top: 12px;">' +
+            '<span>Đóng</span>' +
+            '</button>' +
+            '</div>';
+    }
+
+    function renderCheckoutView(orderData, username) {
+        const orderId = orderData.order_id;
+        const formattedAmount = (orderData.amount || 50000).toLocaleString('vi-VN');
+        const isConfigured = orderData.configured === true;
+
+        let contentHtml = '<div class="checkout-order-summary">' +
+            '<img src="https://mc-heads.net/avatar/' + encodeURIComponent(username) + '/52" alt="' + username + '" class="checkout-avatar" onerror="this.src=\'https://mc-heads.net/avatar/MHF_Steve/52\'">' +
+            '<div class="checkout-meta">' +
+            '<strong>' + username + ' &bull; Rank Plus</strong>' +
+            '<div class="checkout-order-id">Mã đơn: ' + orderId + '</div>' +
+            '<div class="checkout-amount">' + formattedAmount + ' VNĐ</div>' +
+            '</div>' +
+            '</div>';
+
+        if (!isConfigured) {
+            // Unconfigured State: Show graceful alert banner, no fake payment simulation
+            contentHtml += '<div class="payment-unconfigured-banner">' +
+                '<div class="alert-icon">⚙️</div>' +
+                '<h4>CỔNG ZALOPAY ĐANG CHỜ CẤU HÌNH API</h4>' +
+                '<p>Hệ thống máy chủ đã ghi nhận đơn hàng nhưng Cổng thanh toán ZaloPay Merchant đang chờ quản trị viên điền App ID và Secret Key vào <code>backend/.env</code>.</p>' +
+                '<p style="font-size: 0.82rem; color: var(--text-tertiary);">Tuyệt đối không giả lập thanh toán ảo hoặc xác nhận qua ảnh chụp màn hình để bảo đảm an toàn dữ liệu.</p>' +
+                '<div style="margin-top: 14px;">' +
+                '<span class="order-notice-code">Mã đơn lưu trữ: ' + orderId + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div style="display: flex; gap: 10px;">' +
+                '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
+                '<span>Đã Hiểu</span>' +
+                '</button>' +
+                '</div>';
+            checkoutModalBody.innerHTML = contentHtml;
+        } else {
+            // Configured State: Show dynamic QR code & start real-time polling
+            const qrUrl = orderData.qr_code || ('https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' + encodeURIComponent(orderData.order_url || orderId));
+            const payUrl = orderData.order_url || '#';
+
+            contentHtml += '<div class="payment-qr-container">' +
+                '<div class="payment-qr-frame">' +
+                '<img src="' + qrUrl + '" alt="Mã QR ZaloPay" id="zalopay-qr-code">' +
+                '</div>' +
+                '<div class="payment-status-pulsing">' +
+                '<span class="pulse-dot"></span>' +
+                '<span>Đang chờ bạn quét mã thanh toán ZaloPay...</span>' +
+                '</div>' +
+                '<div class="payment-countdown" id="checkout-countdown">Đơn hàng tự động hết hạn sau 15:00</div>' +
+                '<a href="' + payUrl + '" target="_blank" rel="noopener noreferrer" class="btn-zalopay-open">' +
+                '<svg class="zalopay-icon-svg" viewBox="0 0 32 32" fill="currentColor">' +
+                '<path d="M4 8a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8zm7.5 4.5v1.8h4.8L11.5 20v1.8h9v-1.8h-4.8l4.8-5.7v-1.8h-9z"/>' +
+                '</svg>' +
+                '<span>Mở Trực Tiếp Bằng ZaloPay</span>' +
+                '</a>' +
+                '</div>';
+            checkoutModalBody.innerHTML = contentHtml;
+
+            // Start countdown timer
+            let remainingSec = 15 * 60;
+            const timerEl = document.getElementById('checkout-countdown');
+            const countdownInterval = setInterval(() => {
+                remainingSec--;
+                if (remainingSec <= 0) {
+                    clearInterval(countdownInterval);
+                    if (timerEl) timerEl.textContent = 'Đơn hàng đã hết hạn!';
+                    if (activePollingInterval) clearInterval(activePollingInterval);
+                    return;
+                }
+                const m = Math.floor(remainingSec / 60).toString().padStart(2, '0');
+                const s = (remainingSec % 60).toString().padStart(2, '0');
+                if (timerEl) timerEl.textContent = 'Đơn hàng tự động hết hạn sau ' + m + ':' + s;
+            }, 1000);
+
+            // Start real-time status polling every 3 seconds
+            startOrderPolling(orderId, username, countdownInterval);
+        }
+    }
+
+    function startOrderPolling(orderId, username, countdownInterval) {
+        if (activePollingInterval) clearInterval(activePollingInterval);
+
+        activePollingInterval = setInterval(async () => {
+            try {
+                const res = await fetch(resolveApiUrl('/order/status/' + encodeURIComponent(orderId)));
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.success && data.order) {
+                    const status = data.order.status;
+                    if (status === 'PAID' || status === 'DELIVERED') {
+                        // Payment Confirmed!
+                        clearInterval(activePollingInterval);
+                        if (countdownInterval) clearInterval(countdownInterval);
+                        renderPaymentSuccess(data.order, username);
+                    }
+                }
+            } catch (e) {
+                // Ignore transient network errors during polling
+            }
+        }, 3000);
+    }
+
+    function renderPaymentSuccess(order, username) {
+        triggerSparkBurst(window.innerWidth / 2, window.innerHeight / 2, 60);
+        showAppleToast('✦ Kích hoạt Rank Plus thành công! ✦', 3000);
+
+        const rconDelivered = order.rcon_delivered === 1 || order.status === 'DELIVERED';
+        const rconMsg = rconDelivered
+            ? '<span style="color: #30d158;">✔ Đã tự động kích hoạt quyền lợi trực tiếp trong máy chủ Minecraft!</span>'
+            : '<span style="color: #ff9f0a;">⏳ Đơn hàng đã ghi nhận! Server sẽ tự động cấp quyền bù khi online.</span>';
+
+        checkoutModalBody.innerHTML = '<div class="payment-success-card">' +
+            '<div class="payment-success-badge">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+            '<polyline points="20 6 9 17 4 12"></polyline>' +
+            '</svg>' +
+            '</div>' +
+            '<h4>THANH TOÁN THÀNH CÔNG!</h4>' +
+            '<p>Cảm ơn bạn đã ủng hộ máy chủ 67B67T. Tài khoản <strong>' + username + '</strong> đã được nâng cấp lên <strong>Rank Plus</strong>.</p>' +
+            '<div class="payment-success-details">' +
+            '<div class="detail-row"><span>Mã đơn hàng:</span><strong class="mono-code">' + order.order_id + '</strong></div>' +
+            '<div class="detail-row"><span>Số tiền:</span><strong style="color: #30d158;">' + (order.amount || 50000).toLocaleString('vi-VN') + ' VNĐ</strong></div>' +
+            '<div class="detail-row"><span>Trạng thái máy chủ:</span><div>' + rconMsg + '</div></div>' +
+            '</div>' +
+            '<div style="background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-secondary);">' +
+            '👉 Vào máy chủ và gõ lệnh <code>/checkrank</code> hoặc <code>/ec 2</code> để trải nghiệm ngay quyền lợi mới!' +
+            '</div>' +
+            '<button type="button" class="btn btn-apple-primary btn-block" onclick="document.getElementById(\'checkout-modal-close\').click()">' +
+            '<span>Hoàn Tất</span>' +
+            '</button>' +
+            '</div>';
+    }
+
+    // Lookup Handler
+    async function doLookup() {
+        if (!lookupInput || !lookupResults) return;
+        const query = lookupInput.value.trim();
+        if (!query) {
+            lookupResults.innerHTML = '<p class="lookup-placeholder" style="color: #ff6961;">Vui lòng nhập tên người chơi hoặc mã đơn hàng.</p>';
+            return;
+        }
+
+        lookupResults.innerHTML = '<div style="text-align: center; padding: 30px;">' +
+            '<div class="pulse-dot" style="margin: 0 auto 12px;"></div>' +
+            '<p style="color: var(--text-secondary); font-size: 0.85rem;">Đang tìm kiếm dữ liệu đơn hàng...</p>' +
+            '</div>';
+
+        try {
+            const res = await fetch(resolveApiUrl('/order/lookup?q=' + encodeURIComponent(query)));
+            const data = await res.json();
+
+            if (!res.ok || !data.success || !data.orders || data.orders.length === 0) {
+                lookupResults.innerHTML = '<div class="lookup-placeholder">' +
+                    '<p>Không tìm thấy giao dịch nào phù hợp với từ khóa: <strong>' + query + '</strong></p>' +
+                    '</div>';
+                return;
+            }
+
+            let html = '';
+            data.orders.forEach(ord => {
+                let badgeClass = 'badge-pending';
+                let badgeText = 'Chờ thanh toán';
+
+                if (ord.status === 'DELIVERED') {
+                    badgeClass = 'badge-delivered';
+                    badgeText = 'Đã cấp Rank Plus';
+                } else if (ord.status === 'PAID') {
+                    badgeClass = 'badge-paid';
+                    badgeText = 'Đã thanh toán';
+                } else if (ord.status === 'FAILED') {
+                    badgeClass = 'badge-failed';
+                    badgeText = 'Thất bại';
+                }
+
+                const createdDate = ord.created_at ? new Date(ord.created_at).toLocaleString('vi-VN') : 'Mới tạo';
+
+                html += '<div class="lookup-order-card">' +
+                    '<div class="lookup-order-top">' +
+                    '<span class="lookup-order-id">' + ord.order_id + '</span>' +
+                    '<span class="order-badge ' + badgeClass + '">' + badgeText + '</span>' +
+                    '</div>' +
+                    '<div class="lookup-order-bottom">' +
+                    '<span>Tài khoản: <strong>' + ord.username + '</strong></span>' +
+                    '<span>' + (ord.amount || 50000).toLocaleString('vi-VN') + ' đ &bull; ' + createdDate + '</span>' +
+                    '</div>' +
+                    '</div>';
+            });
+
+            lookupResults.innerHTML = html;
+
+        } catch (err) {
+            console.error('[Lookup Error]', err);
+            lookupResults.innerHTML = '<p class="lookup-placeholder" style="color: #ff6961;">Lỗi kết nối máy chủ khi tra cứu. Vui lòng thử lại sau.</p>';
+        }
+    }
+
+    if (btnDoLookup) btnDoLookup.addEventListener('click', doLookup);
+    if (lookupInput) {
+        lookupInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doLookup();
+            }
+        });
+    }
+
 });

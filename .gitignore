@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Environment Variables & Secrets
+.env
+backend/.env
+*.env.local
+
+# Databases
+backend/database/*.db
+backend/database/*.sqlite
+*.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

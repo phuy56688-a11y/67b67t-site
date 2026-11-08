@@ -19,10 +19,10 @@ const config = {
 
   // Cấu hình thanh toán thủ công (Chuyển khoản / Quét QR)
   manualPayment: {
-    bankName: process.env.MANUAL_PAY_BANK || 'MB Bank (Quân Đội)',
-    accountNo: process.env.MANUAL_PAY_ACCOUNT || '0367676767',
-    accountName: process.env.MANUAL_PAY_NAME || 'PHAM HUY',
-    qrTemplate: process.env.MANUAL_PAY_QR_TEMPLATE || 'https://api.vietqr.io/image/970422-0367676767-print.jpg?amount=5000&addInfo=67B67T%20{orderId}&accountName=PHAM%20HUY'
+    bankName: process.env.MANUAL_PAY_BANK || 'ZaloPay',
+    accountNo: process.env.MANUAL_PAY_ACCOUNT || '0388311614',
+    accountName: process.env.MANUAL_PAY_NAME || 'PHAN NGUYEN GIA HUY',
+    qrTemplate: process.env.MANUAL_PAY_QR_TEMPLATE || 'assets/qr-payment.png'
   },
 
   zalopay: {

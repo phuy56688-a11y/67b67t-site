@@ -1665,9 +1665,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 old_amount: 50000,
                 discount_percent: 90,
                 manual_payment: {
-                    bankName: 'MB Bank (Quân Đội)',
-                    accountNo: '0367676767',
-                    accountName: 'PHAM HUY',
+                    bankName: 'ZaloPay',
+                    accountNo: '0388311614',
+                    accountName: 'PHAN NGUYEN GIA HUY',
                     transferContent: transferContent,
                     qrUrl: 'assets/qr-payment.png'
                 }
@@ -1727,9 +1727,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const transferContent = customTransferContent || (orderData.manual_payment ? orderData.manual_payment.transferContent : (Math.floor(Math.random() * 670) + 1 + '-' + username));
 
         const manual = {
-            bankName: (orderData.manual_payment && orderData.manual_payment.bankName) || 'MB Bank (Quân Đội)',
-            accountNo: (orderData.manual_payment && orderData.manual_payment.accountNo) || '0367676767',
-            accountName: (orderData.manual_payment && orderData.manual_payment.accountName) || 'PHAM HUY',
+            bankName: (orderData.manual_payment && orderData.manual_payment.bankName) || 'ZaloPay',
+            accountNo: (orderData.manual_payment && orderData.manual_payment.accountNo) || '0388311614',
+            accountName: (orderData.manual_payment && orderData.manual_payment.accountName) || 'PHAN NGUYEN GIA HUY',
             transferContent: transferContent,
             qrUrl: 'assets/qr-payment.png'
         };
